@@ -5,6 +5,7 @@ This repository contains the data products, reduction pipelines, and analysis to
 # To-Do Items
 
 - Add scripts for downloading the raw and processed data products from MAST.
+- Add modified association files used for processing the data products from MAST through the JWST Pipeline.
 - Add notebooks for processing and analyzing the data products from MAST, including our own custom reduction pipeline with manual processing steps.
 - Add final data products, including the 2D and 1D spectrum, both before and after spectral combination in Stage 3 of the JWST Pipeline.
 - Make sure to mention Jane E. Morrison as one the lead developer for the custom reduction pipeline.
