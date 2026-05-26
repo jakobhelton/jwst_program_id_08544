@@ -1,0 +1,192 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the following paper."
+title: "JWST Program ID 8544"
+date-released: "2026-05-26"
+repository-code: "https://github.com/jakobhelton/jwst_program_id_08544"
+license: Apache-2.0
+authors:
+  - family-names: Helton
+    given-names: Jakob M.
+  - family-names: Morrison
+    given-names: Jane E.
+  - family-names: Hainline
+    given-names: Kevin N.
+  - family-names: "D'Eugenio"
+    given-names: Francesco
+  - family-names: Rieke
+    given-names: George H.
+  - family-names: Alberts
+    given-names: Stacey
+  - family-names: Carniani
+    given-names: Stefano
+  - family-names: Leja
+    given-names: Joel
+  - family-names: Li
+    given-names: Yijia
+  - family-names: Rinaldi
+    given-names: Pierluigi
+  - family-names: Scholtz
+    given-names: Jan
+  - family-names: Stone
+    given-names: Meredith
+  - family-names: Willmer
+    given-names: Christopher N. A.
+  - family-names: Wu
+    given-names: Zihao
+  - family-names: Baker
+    given-names: William M.
+  - family-names: Bunker
+    given-names: Andrew J.
+  - family-names: Charlot
+    given-names: Stephane
+  - family-names: Chevallard
+    given-names: Jacopo
+  - family-names: Cleri
+    given-names: Nikko J.
+  - family-names: Curti
+    given-names: Mirko
+  - family-names: Curtis-Lake
+    given-names: Emma
+  - family-names: Egami
+    given-names: Eiichi
+  - family-names: Eisenstein
+    given-names: Daniel J.
+  - family-names: Jakobsen
+    given-names: Peter
+  - family-names: Ji
+    given-names: Zhiyuan
+  - family-names: Johnson
+    given-names: Benjamin D.
+  - family-names: Kumari
+    given-names: Nimisha
+  - family-names: Lin
+    given-names: Xiaojing
+  - family-names: Lyu
+    given-names: Jianwei
+  - family-names: Maiolino
+    given-names: Roberto
+  - family-names: Maseda
+    given-names: Michael
+  - family-names: "Pérez-González"
+    given-names: Pablo G.
+  - family-names: Rieke
+    given-names: Marcia J.
+  - family-names: Robertson
+    given-names: Brant
+  - family-names: Saxena
+    given-names: Aayush
+  - family-names: Sun
+    given-names: Fengwu
+  - family-names: Tacchella
+    given-names: Sandro
+  - family-names: "Übler"
+    given-names: Hannah
+  - family-names: Venturi
+    given-names: Giacomo
+  - family-names: Williams
+    given-names: Christina C.
+  - family-names: Willott
+    given-names: Chris
+  - family-names: Witstok
+    given-names: Joris
+  - family-names: Zhu
+    given-names: Yongda
+preferred-citation:
+  type: article
+  title: "Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0"
+  journal: "The Astrophysical Journal Letters"
+  year: 2026
+  authors:
+    - family-names: Helton
+      given-names: Jakob M.
+    - family-names: Morrison
+      given-names: Jane E.
+    - family-names: Hainline
+      given-names: Kevin N.
+    - family-names: "D'Eugenio"
+      given-names: Francesco
+    - family-names: Rieke
+      given-names: George H.
+    - family-names: Alberts
+      given-names: Stacey
+    - family-names: Carniani
+      given-names: Stefano
+    - family-names: Leja
+      given-names: Joel
+    - family-names: Li
+      given-names: Yijia
+    - family-names: Rinaldi
+      given-names: Pierluigi
+    - family-names: Scholtz
+      given-names: Jan
+    - family-names: Stone
+      given-names: Meredith
+    - family-names: Willmer
+      given-names: Christopher N. A.
+    - family-names: Wu
+      given-names: Zihao
+    - family-names: Baker
+      given-names: William M.
+    - family-names: Bunker
+      given-names: Andrew J.
+    - family-names: Charlot
+      given-names: Stephane
+    - family-names: Chevallard
+      given-names: Jacopo
+    - family-names: Cleri
+      given-names: Nikko J.
+    - family-names: Curti
+      given-names: Mirko
+    - family-names: Curtis-Lake
+      given-names: Emma
+    - family-names: Egami
+      given-names: Eiichi
+    - family-names: Eisenstein
+      given-names: Daniel J.
+    - family-names: Jakobsen
+      given-names: Peter
+    - family-names: Ji
+      given-names: Zhiyuan
+    - family-names: Johnson
+      given-names: Benjamin D.
+    - family-names: Kumari
+      given-names: Nimisha
+    - family-names: Lin
+      given-names: Xiaojing
+    - family-names: Lyu
+      given-names: Jianwei
+    - family-names: Maiolino
+      given-names: Roberto
+    - family-names: Maseda
+      given-names: Michael
+    - family-names: "Pérez-González"
+      given-names: Pablo G.
+    - family-names: Rieke
+      given-names: Marcia J.
+    - family-names: Robertson
+      given-names: Brant
+    - family-names: Saxena
+      given-names: Aayush
+    - family-names: Sun
+      given-names: Fengwu
+    - family-names: Tacchella
+      given-names: Sandro
+    - family-names: "Übler"
+      given-names: Hannah
+    - family-names: Venturi
+      given-names: Giacomo
+    - family-names: Williams
+      given-names: Christina C.
+    - family-names: Willott
+      given-names: Chris
+    - family-names: Witstok
+      given-names: Joris
+    - family-names: Zhu
+      given-names: Yongda
+  identifiers:
+    - type: url
+      value: "https://arxiv.org/abs/2512.19695"
+      description: "arXiv preprint"
+    - type: url
+      value: "https://doi.org/10.17909/vpjw-b773"
+      description: "MAST data repository"

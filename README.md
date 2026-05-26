@@ -2,9 +2,12 @@
 
 **Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0**
 
-Helton et al. (2026), *The Astrophysical Journal Letters* | [arXiv:2512.19695](https://arxiv.org/abs/2512.19695)
+Helton et al. (2026), *The Astrophysical Journal Letters*
 
-MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
+[![arXiv](https://img.shields.io/badge/arXiv-2512.19695-b31b1b.svg?style=flat)](https://arxiv.org/abs/2512.19695)
+[![DOI](https://img.shields.io/badge/DOI-10.17909%2Fvpjw--b773-blue.svg?style=flat)](https://doi.org/10.17909/vpjw-b773)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat)](https://opensource.org/licenses/Apache-2.0)
+[![JWST Pipeline](https://img.shields.io/badge/JWST%20Pipeline-v2.0.0-orange.svg?style=flat)](https://jwst-pipeline.readthedocs.io/en/stable/)
 
 ---
 
@@ -121,14 +124,14 @@ Publication figures from Helton et al. (2026). Each figure is provided in JPEG, 
 
 | Figure | Files | Description |
 |---|---|---|
-| Figure 1 | `Slit_Locations.{jpg,pdf,png}` | On-sky positions of the MIRI/LRS slit for each of the four scheduled visits (Obs 001–004) overlaid on a JWST/NIRCam image of the JADES-GS-z14-0 field. Obs 001 failed target acquisition; Obs 002, 003, and 004 are the three science visits included in the analysis. |
-| Figure 2 | `Full_Spectrum.{jpg,pdf,png}` | Final combined MIRI/LRS spectrum of JADES-GS-z14-0 showing both the rectified 2D spectrum (from the s2d file) and the 1D extracted spectrum with 1σ uncertainty envelope (from the combined x1d file). The spectrum spans ~5.0–14.0 microns observed frame (~0.33–0.93 microns rest frame at z = 14.18). |
-| Figure 3 | `ZoomIn_EmissionLines.{jpg,pdf,png}` | Zoom-in views of the spectrum around the key detected emission features: [OII]λλ3726,3729 (marginal), Hβ + [OIII]λλ4959,5007 (~14σ combined), and Hα (~4σ). Best-fit emission line models are overlaid. |
-| Figure 4 | `LHalpha_vs_MUV.{jpg,pdf,png}` | Hα luminosity versus absolute UV magnitude (MUV) for JADES-GS-z14-0 compared to a literature compilation of high-redshift galaxies. JADES-GS-z14-0 shows Hα luminosity broadly consistent with other z > 10 galaxies of similar UV brightness. |
-| Figure 5 | `xi_ion_vs_zSpec_and_MUV.{jpg,pdf,png}` | Ionizing photon production efficiency (ξion) as a function of spectroscopic redshift (left) and absolute UV magnitude (right) for JADES-GS-z14-0 compared to the literature. JADES-GS-z14-0 has log₁₀(ξion) ≈ 25.3 ± 0.1 Hz/erg, among the highest values measured at any redshift. |
-| Figure 6 | `O32_vs_R3_and_R23.{jpg,pdf,png}` | Strong-line emission-line ratio diagnostics: O32 versus R3 (left) and O32 versus R23 (right) for JADES-GS-z14-0 overlaid on the grid of Cue photoionization models. These diagrams constrain the ionization parameter (log₁₀U ≳ −2.4) and oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2). |
-| Figure 7 | `logCtoO_vs_logOtoH.{jpg,pdf,png}` | Carbon-to-oxygen ratio ([C/O]) versus gas-phase oxygen abundance (12 + log₁₀(O/H)) for JADES-GS-z14-0 compared to literature measurements in high-redshift galaxies and local H II regions. JADES-GS-z14-0 has [C/O] ≈ −0.4 ± 0.2, consistent with enrichment primarily by massive, short-lived stars with limited carbon contribution from AGB stars. |
-| Figure 8 | `Cue_results_corner.{jpg,pdf,png}` | Joint posterior probability distributions from the Cue neural-network photoionization model fitting to the observed emission line fluxes. Constrained parameters include gas-phase metallicity, ionization parameter, hydrogen gas density (nH ≈ 690 ± 200 cm⁻³), and carbon-to-oxygen ratio. |
+| <nobr>Figure 1</nobr> | <nobr>`Slit_Locations.{jpg,pdf,png}`</nobr> | On-sky positions of the MIRI/LRS slit for each of the four scheduled visits (Obs 001–004) overlaid on a JWST/NIRCam image of the JADES-GS-z14-0 field. Obs 001 failed target acquisition; Obs 002, 003, and 004 are the three science visits included in the analysis. |
+| <nobr>Figure 2</nobr> | <nobr>`Full_Spectrum.{jpg,pdf,png}`</nobr> | Final combined MIRI/LRS spectrum of JADES-GS-z14-0 showing both the rectified 2D spectrum (from the s2d file) and the 1D extracted spectrum with 1σ uncertainty envelope (from the combined x1d file). The spectrum spans ~5.0–14.0 microns observed frame (~0.33–0.93 microns rest frame at z = 14.18). |
+| <nobr>Figure 3</nobr> | <nobr>`ZoomIn_EmissionLines.{jpg,pdf,png}`</nobr> | Zoom-in views of the spectrum around the key detected emission features: [OII]λλ3726,3729 (marginal), Hβ + [OIII]λλ4959,5007 (~14σ combined), and Hα (~4σ). Best-fit emission line models are overlaid. |
+| <nobr>Figure 4</nobr> | <nobr>`LHalpha_vs_MUV.{jpg,pdf,png}`</nobr> | Hα luminosity versus absolute UV magnitude (MUV) for JADES-GS-z14-0 compared to a literature compilation of high-redshift galaxies. JADES-GS-z14-0 shows Hα luminosity broadly consistent with other z > 10 galaxies of similar UV brightness. |
+| <nobr>Figure 5</nobr> | <nobr>`xi_ion_vs_zSpec_and_MUV.{jpg,pdf,png}`</nobr> | Ionizing photon production efficiency (ξion) as a function of spectroscopic redshift (left) and absolute UV magnitude (right) for JADES-GS-z14-0 compared to the literature. JADES-GS-z14-0 has log₁₀(ξion) ≈ 25.3 ± 0.1 Hz/erg, among the highest values measured at any redshift. |
+| <nobr>Figure 6</nobr> | <nobr>`O32_vs_R3_and_R23.{jpg,pdf,png}`</nobr> | Strong-line emission-line ratio diagnostics: O32 versus R3 (left) and O32 versus R23 (right) for JADES-GS-z14-0 overlaid on the grid of Cue photoionization models. These diagrams constrain the ionization parameter (log₁₀U ≳ −2.4) and oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2). |
+| <nobr>Figure 7</nobr> | <nobr>`logCtoO_vs_logOtoH.{jpg,pdf,png}`</nobr> | Carbon-to-oxygen ratio ([C/O]) versus gas-phase oxygen abundance (12 + log₁₀(O/H)) for JADES-GS-z14-0 compared to literature measurements in high-redshift galaxies and local H II regions. JADES-GS-z14-0 has [C/O] ≈ −0.4 ± 0.2, consistent with enrichment primarily by massive, short-lived stars with limited carbon contribution from AGB stars. |
+| <nobr>Figure 8</nobr> | <nobr>`Cue_results_corner.{jpg,pdf,png}`</nobr> | Joint posterior probability distributions from the Cue neural-network photoionization model fitting to the observed emission line fluxes. Constrained parameters include gas-phase metallicity, ionization parameter, hydrogen gas density (nH ≈ 690 ± 200 cm⁻³), and carbon-to-oxygen ratio. |
 
 ---
 
@@ -186,11 +189,35 @@ The conda environment needed to run the reduction pipeline and analysis scripts 
 
 If you use these data or scripts in your research, please cite:
 
-> Helton et al. (2026), *The Astrophysical Journal Letters*, "Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0"
->
-> arXiv: [2512.19695](https://arxiv.org/abs/2512.19695)
->
-> MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
+```bibtex
+@article{Helton2026,
+  author        = {{Helton}, Jakob M. and {Morrison}, Jane E. and {Hainline}, Kevin N. and
+                   {D'Eugenio}, Francesco and {Rieke}, George H. and {Alberts}, Stacey and
+                   {Carniani}, Stefano and {Leja}, Joel and {Li}, Yijia and
+                   {Rinaldi}, Pierluigi and {Scholtz}, Jan and {Stone}, Meredith and
+                   {Willmer}, Christopher N.~A. and {Wu}, Zihao and {Baker}, William M. and
+                   {Bunker}, Andrew J. and {Charlot}, Stephane and {Chevallard}, Jacopo and
+                   {Cleri}, Nikko J. and {Curti}, Mirko and {Curtis-Lake}, Emma and
+                   {Egami}, Eiichi and {Eisenstein}, Daniel J. and {Jakobsen}, Peter and
+                   {Ji}, Zhiyuan and {Johnson}, Benjamin D. and {Kumari}, Nimisha and
+                   {Lin}, Xiaojing and {Lyu}, Jianwei and {Maiolino}, Roberto and
+                   {Maseda}, Michael and {P{\'e}rez-Gonz{\'a}lez}, Pablo G. and
+                   {Rieke}, Marcia J. and {Robertson}, Brant and {Saxena}, Aayush and
+                   {Sun}, Fengwu and {Tacchella}, Sandro and {{\"U}bler}, Hannah and
+                   {Venturi}, Giacomo and {Williams}, Christina C. and {Willott}, Chris and
+                   {Witstok}, Joris and {Zhu}, Yongda},
+  title         = "{Ionizing Photon Production Efficiencies and Chemical Abundances at
+                   Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy
+                   of {JADES-GS-z14-0}}",
+  journal       = {\apjl},
+  year          = {2026},
+  eprint        = {2512.19695},
+  archivePrefix = {arXiv},
+  primaryClass  = {astro-ph.GA},
+}
+```
+
+MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
 
 ---
 
