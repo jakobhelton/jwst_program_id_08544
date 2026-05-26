@@ -1,0 +1,21 @@
+# Manuscript PDF — not for public distribution
+PID08544_Paper1___Manuscript_R1.pdf
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+*.env

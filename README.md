@@ -1,0 +1,184 @@
+# JWST Program ID 8544
+
+**Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0**
+
+Helton et al. (2026), *The Astrophysical Journal*
+
+MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
+
+---
+
+## Overview
+
+This repository contains the data products, reduction pipelines, analysis scripts, figures, and results associated with ultra-deep rest-frame optical spectroscopy of JADES-GS-z14-0, one of the most distant galaxies currently known at a spectroscopic redshift of z ≈ 14.18. These observations were obtained by JWST/MIRI's Low Resolution Spectrometer (LRS) as part of JWST Cycle 4 Program #8544 (PI: Jakob M. Helton).
+
+The LRS slit spectra span approximately 5.0–14.0 microns (observed frame), corresponding to rest-frame optical wavelengths (~0.3–1.0 microns), and cover key emission features including [OII]λλ3726,3729, Hβ, [OIII]λλ4959,5007, Hα, and [NII]λ6585. The combined spectrum totals approximately 183,800 seconds (~51 hours) of on-sky integration across three visits (Obs 002, Obs 003, and Obs 004; Obs 001 failed target acquisition). The data were collected on 2025 November 15–18 and 2026 January 1–2 using the FASTR1 readout pattern. The [OIII]λλ4959,5007 doublet is detected at ~14σ and Hα at ~4σ, enabling robust measurements of the ionizing photon production efficiency (log₁₀ξion ≈ 25.3 ± 0.1 Hz/erg), gas-phase oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2 from strong-line diagnostics), carbon-to-oxygen ratio ([C/O] ≈ −0.4 ± 0.2), and star formation rate (SFR ≈ 8 ± 2 M☉/yr).
+
+Data were reduced using the standard JWST Calibration Pipeline (version 2.0.0) with Calibration Reference Data System (version 13.1.14, pipeline mapping 1536). The custom reduction pipeline was developed by Jakob M. Helton and **Jane E. Morrison**, with Morrison serving as a lead developer. Additional manual post-processing steps include V2/V3 reference coordinate tweaks, nod subtraction, bad-pixel cleaning, sigma-clipping, and optimal spectral extraction.
+
+---
+
+## Repository Contents
+
+### `data/`
+
+Raw downloads, pipeline association files, calibrated spectra, and supporting data products.
+
+#### Download Scripts
+
+Shell scripts for retrieving raw uncalibrated files from the Mikulski Archive for Space Telescopes (MAST). Each script targets one JWST observation visit.
+
+| File | Description |
+|---|---|
+| `Download_PID08544_Obs1.sh` | Downloads raw files for Obs 001 (failed target acquisition) |
+| `Download_PID08544_Obs2.sh` | Downloads raw files for Obs 002 (UT 2025 November 15–16; 8 exposures) |
+| `Download_PID08544_Obs3.sh` | Downloads raw files for Obs 003 (UT 2025 November 17–18; 8 exposures) |
+| `Download_PID08544_Obs4.sh` | Downloads raw files for Obs 004 (UT 2026 January 1–2; 8 exposures) |
+
+Raw uncalibrated files are publicly available via MAST at https://mast.stsci.edu/search/ui/#/jwst (Program ID: 8544).
+
+#### Pipeline Association Files
+
+Modified Stage 3 association files used to process calibrated exposures through `Spec3Pipeline`. These were customized from the default MAST-generated associations to combine observations across visits.
+
+| File | Description |
+|---|---|
+| `Stage3_All_association.json` | Association combining all 24 exposures from Obs 002, 003, and 004 |
+| `Stage3_Obs002_association.json` | Association for the 8 exposures from Obs 002 alone |
+| `Stage3_Obs003_association.json` | Association for the 8 exposures from Obs 003 alone |
+| `Stage3_Obs004_association.json` | Association for the 8 exposures from Obs 004 alone |
+
+#### Calibrated Spectra (FITS)
+
+Output data products from Stage 3 of the JWST Calibration Pipeline. See `data/ReadMe.txt` for a complete description of the FITS file structure and column definitions.
+
+| File | Size | Description |
+|---|---|---|
+| `jw08544_obsAll_t001_miri_p750l_s2d.fits` | ~1.1 MB | Combined rectified 2D spectrum from all 24 exposures |
+| `jw08544_obsAll_t001_miri_p750l_x1d.fits` | ~196 KB | Combined 1D extracted spectrum from all 24 exposures |
+| `jw08544_obsAll_t001_miri_p750l_0_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 0 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_1_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 1 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_2_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 2 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_3_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 3 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_4_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 4 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_5_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 5 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_6_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 6 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_7_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 7 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_8_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 8 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_9_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 9 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_10_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 10 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_11_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 11 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_12_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 12 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_13_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 13 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_14_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 14 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_15_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 15 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_16_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 16 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_17_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 17 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_18_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 18 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_19_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 19 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_20_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 20 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_21_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 21 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_22_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 22 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_23_x1d.fits` | ~224 KB | Individual 1D spectrum, exposure 23 (Obs 004) |
+
+The 24 individual x1d files (exposures 0–23) allow verification of signal consistency across exposures and visits. They are also used to construct the empirical covariance matrix described below. Note that the flux uncertainties in the combined x1d file underestimate the true per-channel noise by approximately 40–45%; the empirical covariance matrix should be used for any quantitative analysis.
+
+#### Empirical Covariance Matrix
+
+Derived from bootstrap resampling of the 24 individual x1d spectra to characterize correlated noise and noise inflation in the combined spectrum.
+
+| File | Description |
+|---|---|
+| `empirical_covariance_matrix.csv` | Empirical covariance matrix in CSV format |
+| `empirical_covariance_matrix.npy` | Empirical covariance matrix as a NumPy binary array |
+
+#### Documentation and Environment
+
+| File | Description |
+|---|---|
+| `ReadMe.txt` | Detailed description of the FITS data products, file structure, column definitions, and example Python access code (formatted as a standard journal data-behind-the-figure README) |
+| `Conda_Environment_Instructions.txt` | Instructions for creating the conda environment required to run the reduction pipeline and analysis scripts |
+
+---
+
+### `figures/Paper1/`
+
+Publication figures from Helton et al. (2026). Each figure is provided in JPEG, PDF, and PNG formats.
+
+| Figure | Files | Description |
+|---|---|---|
+| Figure 1 | `Slit_Locations.{jpg,pdf,png}` | On-sky positions of the MIRI/LRS slit for each of the four scheduled visits (Obs 001–004) overlaid on a JWST/NIRCam image of the JADES-GS-z14-0 field. Obs 001 failed target acquisition; Obs 002, 003, and 004 are the three science visits included in the analysis. |
+| Figure 2 | `Full_Spectrum.{jpg,pdf,png}` | Final combined MIRI/LRS spectrum of JADES-GS-z14-0 showing both the rectified 2D spectrum (from the s2d file) and the 1D extracted spectrum with 1σ uncertainty envelope (from the combined x1d file). The spectrum spans ~5.0–14.0 microns observed frame (~0.33–0.93 microns rest frame at z = 14.18). |
+| Figure 3 | `ZoomIn_EmissionLines.{jpg,pdf,png}` | Zoom-in views of the spectrum around the key detected emission features: [OII]λλ3726,3729 (marginal), Hβ + [OIII]λλ4959,5007 (~14σ combined), and Hα (~4σ). Best-fit emission line models are overlaid. |
+| Figure 4 | `LHalpha_vs_MUV.{jpg,pdf,png}` | Hα luminosity versus absolute UV magnitude (MUV) for JADES-GS-z14-0 compared to a literature compilation of high-redshift galaxies. JADES-GS-z14-0 shows Hα luminosity broadly consistent with other z > 10 galaxies of similar UV brightness. |
+| Figure 5 | `xi_ion_vs_zSpec_and_MUV.{jpg,pdf,png}` | Ionizing photon production efficiency (ξion) as a function of spectroscopic redshift (left) and absolute UV magnitude (right) for JADES-GS-z14-0 compared to the literature. JADES-GS-z14-0 has log₁₀ξion ≈ 25.3 ± 0.1 Hz/erg, among the highest values measured at any redshift. |
+| Figure 6 | `O32_vs_R3_and_R23.{jpg,pdf,png}` | Strong-line emission-line ratio diagnostics: O32 versus R3 (left) and O32 versus R23 (right) for JADES-GS-z14-0 overlaid on the grid of Cue photoionization models. These diagrams constrain the ionization parameter (log₁₀U ≳ −2.4) and oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2). |
+| Figure 7 | `logCtoO_vs_logOtoH.{jpg,pdf,png}` | Carbon-to-oxygen ratio ([C/O]) versus gas-phase oxygen abundance (12 + log₁₀(O/H)) for JADES-GS-z14-0 compared to literature measurements in high-redshift galaxies and local H II regions. JADES-GS-z14-0 has [C/O] ≈ −0.4 ± 0.2, consistent with enrichment primarily by massive, short-lived stars with limited carbon contribution from AGB stars. |
+| Figure 8 | `Cue_results_corner.{jpg,pdf,png}` | Joint posterior probability distributions from the Cue neural-network photoionization model fitting to the observed emission line fluxes. Constrained parameters include gas-phase metallicity, ionization parameter, hydrogen gas density (nH ≈ 690 ± 200 cm⁻³), and carbon-to-oxygen ratio. |
+
+---
+
+### `results/Cue/`
+
+Output files from the Cue (Li et al. 2024, 2025) neural-network photoionization model fitting.
+
+| File | Description |
+|---|---|
+| `GSz14_Cue_corner_plot_large.{jpg,pdf,png}` | Large-format version of the Cue posterior corner plot (Figure 8 equivalent with additional parameters shown) |
+| `GSz14_Cue.pkl` | Main Cue fitting results: full posterior samples and derived physical properties |
+| `GSz14_Cue_ionFlambda.pkl` | Cue ion flux-lambda data used for constructing the model spectrum |
+| `GSz14_Cue_lineFluxData.pkl` | Posterior distributions of individual emission line fluxes from Cue |
+| `GSz14_Cue_linePlotData.pkl` | Data arrays used to generate the Cue model line profile plots |
+
+---
+
+### `PID08544_Reduction_Pipeline_helper.py`
+
+Custom JWST MIRI/LRS reduction pipeline helper script (developed by Jakob M. Helton and **Jane E. Morrison**). This script implements all three stages of the JWST Calibration Pipeline (version 2.0.0) with additional custom corrections and manual post-processing steps designed to maximize the signal quality of faint, high-redshift sources in MIRI/LRS slit spectroscopy.
+
+Key capabilities include:
+
+- **Stage 1** (`Detector1Pipeline`): Standard ramp-fitting and detector-level calibration
+- **Stage 2** (`Spec2Pipeline`): Custom V2/V3 reference coordinate tweaks to correct pointing offsets, nod-pair background subtraction, sigma-clipping and bad-pixel masking, and trace-region masking
+- **Stage 3** (`Spec3Pipeline`): Spectral combination and optimal 1D extraction using the modified association files in `data/`
+
+The script requires the `REDUCTIONS_MIRI` environment variable to be set to the root directory of the local reduction tree. Usage examples covering all four observations are included in the script's top-level docstring.
+
+---
+
+### `PID08544_Prospector_helper.py`
+
+Prospector SED fitting helper script for modeling the broadband spectral energy distribution and emission-line properties of JADES-GS-z14-0. Built on the Prospector framework (Johnson et al. 2021) using FSPS stellar population models and the dynesty nested sampler.
+
+Key capabilities include:
+
+- Multiple star formation history (SFH) parameterizations: BurstyContinuity, Continuity, Rising, Constant, and DelayedTau
+- IGM absorption, Lyman-series damping wing, and ionizing photon escape fraction as free parameters
+- Joint fitting of JWST/NIRSpec spectra, MIRI/LRS spectra, broadband photometry, and ALMA continuum constraints
+- Derived quantities: emission-line equivalent widths, star formation rates, stellar masses, and mass-weighted ages
+- Diagnostic plots: trace plots, corner plots, and star formation history panels
+
+---
+
+## Software Requirements
+
+The conda environment needed to run the reduction pipeline and analysis scripts is described in `data/Conda_Environment_Instructions.txt`. Key dependencies include:
+
+[AstroPy](https://docs.astropy.org) | [corner](https://corner.readthedocs.io) | [Cue](https://github.com/yi-jit/cue) | [dynesty](https://dynesty.readthedocs.io) | [LMFIT](https://lmfit.github.io/lmfit-py) | [Matplotlib](https://matplotlib.org) | [NumPy](https://numpy.org) | [pandas](https://pandas.pydata.org) | [photutils](https://photutils.readthedocs.io) | [PyNeb](http://research.iac.es/proyecto/PyNeb) | [SciPy](https://scipy.org) | [seaborn](https://seaborn.pydata.org) | [specutils](https://specutils.readthedocs.io)
+
+---
+
+## Citation
+
+If you use these data or scripts in your research, please cite:
+
+> Helton et al. (2026), *The Astrophysical Journal*, "Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0"
+>
+> MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
+
+---
+
+## Data Availability
+
+Raw uncalibrated JWST files for Program 8544 are publicly available via MAST:
+https://mast.stsci.edu/search/ui/#/jwst (Program ID: 8544)

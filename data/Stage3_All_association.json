@@ -1,0 +1,163 @@
+{
+    "asn_type": "Stage3/Spec3",
+    "asn_rule": "DMS_Level3_Base",
+    "version_id": null,
+    "code_version": "2.0.0",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "Program_ID_JWST08544",
+    "constraints": "No constraints",
+    "asn_id": "ObsAll",
+    "target": "t001",
+    "asn_pool": "none",
+    "products": [
+        {
+            "name": "jw08544_obsAll_t001_miri_p750l",
+            "members": [
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03103_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03103_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03105_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03105_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03107_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03107_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03109_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs2/Default_Pipeline_Stage2/jw08544002001_03109_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03109_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03105_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03103_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03107_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03103_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03107_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03105_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs3/Default_Pipeline_Stage2/jw08544003001_03109_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o003', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03103_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03107_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03109_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03105_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03105_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03109_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03103_00001_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "/Users/jqh6631/Projects/jwst/JADES/AnalysisMIRI/reductions/PID8544_Obs4/Default_Pipeline_Stage2/jw08544004001_03107_00002_mirimage_tweak_clean_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('o004', 'observation')]"
+                }
+            ]
+        }
+    ]
+}
