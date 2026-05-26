@@ -2,7 +2,7 @@
 
 **Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0**
 
-Helton et al. (2026), *The Astrophysical Journal*
+Helton et al. (2026), *The Astrophysical Journal* | [arXiv:2512.19695](https://arxiv.org/abs/2512.19695)
 
 MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
 
@@ -12,9 +12,21 @@ MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
 
 This repository contains the data products, reduction pipelines, analysis scripts, figures, and results associated with ultra-deep rest-frame optical spectroscopy of JADES-GS-z14-0, one of the most distant galaxies currently known at a spectroscopic redshift of z ≈ 14.18. These observations were obtained by JWST/MIRI's Low Resolution Spectrometer (LRS) as part of JWST Cycle 4 Program #8544 (PI: Jakob M. Helton).
 
-The LRS slit spectra span approximately 5.0–14.0 microns (observed frame), corresponding to rest-frame optical wavelengths (~0.3–1.0 microns), and cover key emission features including [OII]λλ3726,3729, Hβ, [OIII]λλ4959,5007, Hα, and [NII]λ6585. The combined spectrum totals approximately 183,800 seconds (~51 hours) of on-sky integration across three visits (Obs 002, Obs 003, and Obs 004; Obs 001 failed target acquisition). The data were collected on 2025 November 15–18 and 2026 January 1–2 using the FASTR1 readout pattern. The [OIII]λλ4959,5007 doublet is detected at ~14σ and Hα at ~4σ, enabling robust measurements of the ionizing photon production efficiency (log₁₀ξion ≈ 25.3 ± 0.1 Hz/erg), gas-phase oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2 from strong-line diagnostics), carbon-to-oxygen ratio ([C/O] ≈ −0.4 ± 0.2), and star formation rate (SFR ≈ 8 ± 2 M☉/yr).
+### Instrument
 
-Data were reduced using the standard JWST Calibration Pipeline (version 2.0.0) with Calibration Reference Data System (version 13.1.14, pipeline mapping 1536). The custom reduction pipeline was developed by Jakob M. Helton and **Jane E. Morrison**, with Morrison serving as a lead developer. Additional manual post-processing steps include V2/V3 reference coordinate tweaks, nod subtraction, bad-pixel cleaning, sigma-clipping, and optimal spectral extraction.
+MIRI/LRS is a prism-based spectrograph that covers approximately 5–14 microns at a spectral resolution of R ≈ 40–160 (varying with wavelength). In slit spectroscopy mode, the source is placed on a fixed 0.51 × 4.7 arcsec slit and dispersed by the P750L prism+filter assembly onto the MIRI detector. Two dither positions along the slit (nod positions) allow the slit itself to serve as the background reference: alternating nod-pair subtractions remove detector glow, thermal background, and spatially smooth contamination. Compared to slitless mode, slit spectroscopy provides lower background levels and improved spectral purity at the cost of a smaller instantaneous field of view. Further details on the MIRI/LRS observing mode are available in the [JWST User Documentation](https://jwst-docs.stsci.edu/jwst-mid-infrared-instrument/miri-observing-modes/miri-low-resolution-spectroscopy).
+
+The LRS slit spectra span approximately 5.0–14.0 microns (observed frame), corresponding to rest-frame optical wavelengths (~0.3–1.0 microns), and cover key emission features including [OII]λλ3726,3729, Hβ, [OIII]λλ4959,5007, Hα, and [NII]λ6585. The combined spectrum totals approximately 183,800 seconds (~51 hours) of on-sky integration across three visits (Obs 002, Obs 003, and Obs 004; Obs 001 failed target acquisition). The data were collected on 2025 November 15–18 and 2026 January 1–2 using the FASTR1 readout pattern with 119 groups per integration. The [OIII]λλ4959,5007 doublet is detected at ~14σ and Hα at ~4σ, enabling robust measurements of the ionizing photon production efficiency (log₁₀ξion ≈ 25.3 ± 0.1 Hz/erg), gas-phase oxygen abundance (12 + log₁₀(O/H) ≈ 7.5 ± 0.2 from strong-line diagnostics), carbon-to-oxygen ratio ([C/O] ≈ −0.4 ± 0.2), and star formation rate (SFR ≈ 8 ± 2 M☉/yr).
+
+### Data Reduction
+
+Data were reduced using the standard [JWST Calibration Pipeline](https://jwst-pipeline.readthedocs.io/en/stable/) (version 2.0.0) with Calibration Reference Data System (version 13.1.14, pipeline mapping 1536), proceeding through three sequential stages:
+
+- **Stage 1** (`Detector1Pipeline`): Detector-level corrections applied universally across all JWST instruments and modes, including linearity correction, saturation flagging, cosmic-ray jump detection, and ramp fitting to convert raw counts to count-rate images.
+- **Stage 2** (`Spec2Pipeline`): Instrument- and mode-specific calibrations for spectroscopic data, including WCS assignment, flat-fielding, photometric calibration, background subtraction, and resampling of each exposure to a rectified 2D spectral frame.
+- **Stage 3** (`Spec3Pipeline`): Combination of multiple calibrated exposures from a single association into a final mosaic and 1D extracted spectrum.
+
+The custom reduction pipeline was developed by Jakob M. Helton and **Jane E. Morrison**, with Morrison serving as a lead developer. Additional manual post-processing steps were applied at each stage to maximize signal quality for this faint, high-redshift source: custom V2/V3 reference coordinate tweaks to correct pointing offsets, nod-pair background subtraction, sigma-clipping and bad-pixel masking, trace-region masking, and optimal spectral extraction.
 
 ---
 
@@ -173,6 +185,8 @@ The conda environment needed to run the reduction pipeline and analysis scripts 
 If you use these data or scripts in your research, please cite:
 
 > Helton et al. (2026), *The Astrophysical Journal*, "Ionizing Photon Production Efficiencies and Chemical Abundances at Cosmic Dawn Revealed by Ultra-Deep Rest-Frame Optical Spectroscopy of JADES-GS-z14-0"
+>
+> arXiv: [2512.19695](https://arxiv.org/abs/2512.19695)
 >
 > MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
 
