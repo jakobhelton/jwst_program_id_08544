@@ -1,0 +1,15 @@
+# Command line arguments to properly set up my JWST pipeline environment for conda 
+
+conda deactivate
+
+conda create -n jwst_pipeline python=3.13 
+
+conda activate jwst_pipeline
+
+pip install jwst==1.20.2
+
+conda install -c conda-forge matplotlib numpy pandas scipy seaborn astropy ipython jupyter lmfit photutils specutils dynesty corner # texlive-core
+
+python -m pip install astro-sedpy
+
+pip install -U PyNeb
