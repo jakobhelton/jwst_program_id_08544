@@ -31,7 +31,7 @@ Data were reduced using the standard [JWST Calibration Pipeline](https://jwst-pi
 - **Stage 2** (`Spec2Pipeline`): Instrument- and mode-specific calibrations for spectroscopic data, including WCS assignment, flat-fielding, photometric calibration, background subtraction, and resampling of each exposure to a rectified 2D spectral frame.
 - **Stage 3** (`Spec3Pipeline`): Combination of multiple calibrated exposures from a single association into a final mosaic and 1D extracted spectrum.
 
-The custom reduction pipeline was developed by Jakob M. Helton and **Jane E. Morrison**, with Morrison serving as a lead developer. Additional manual post-processing steps were applied at each stage to maximize signal quality for this faint, high-redshift source: custom V2/V3 reference coordinate tweaks to correct pointing offsets, nod-pair background subtraction, sigma-clipping and bad-pixel masking, trace-region masking, and optimal spectral extraction.
+The custom reduction pipeline was developed by Jakob M. Helton and **Jane E. Morrison**, with Morrison serving as lead developer. Additional manual post-processing steps were applied at each stage to maximize signal quality for this faint, high-redshift source: custom V2/V3 reference coordinate tweaks to correct pointing offsets, nod-pair background subtraction, sigma-clipping and bad-pixel masking, trace-region masking, and optimal spectral extraction.
 
 ---
 
@@ -52,7 +52,7 @@ Shell scripts for retrieving raw uncalibrated files from the Mikulski Archive fo
 | `Download_PID08544_Obs3.sh` | Downloads raw files for Obs 003 (UT 2025 November 17–18; 8 exposures) |
 | `Download_PID08544_Obs4.sh` | Downloads raw files for Obs 004 (UT 2026 January 1–2; 8 exposures) |
 
-Raw uncalibrated files are publicly available via MAST at https://mast.stsci.edu/search/ui/#/jwst (Program ID: 8544).
+Raw uncalibrated files are publicly available via [MAST](https://mast.stsci.edu/search/ui/#/jwst) (Program ID: 8544).
 
 #### Pipeline Association Files
 
@@ -129,7 +129,7 @@ Publication figures from Helton et al. (2026). Each figure is provided in JPEG, 
 | Figure&nbsp;3 | <nobr>`ZoomIn_EmissionLines.{jpg,pdf,png}`</nobr> | Zoom-in views of the spectrum around the key detected emission features: [OII]λλ3726,3729 (marginal), Hβ + [OIII]λλ4959,5007 (${\sim}14\sigma$ combined), and Hα (${\sim}4\sigma$). Best-fit emission line models are overlaid. |
 | Figure&nbsp;4 | <nobr>`LHalpha_vs_MUV.{jpg,pdf,png}`</nobr> | Hα luminosity versus absolute UV magnitude ($M_{\mathrm{UV}}$) for JADES-GS-z14-0 compared to a literature compilation of high-redshift galaxies. JADES-GS-z14-0 shows Hα luminosity broadly consistent with other $z > 10$ galaxies of similar UV brightness. |
 | Figure&nbsp;5 | <nobr>`xi_ion_vs_zSpec_and_MUV.{jpg,pdf,png}`</nobr> | Ionizing photon production efficiency ($\xi_{\mathrm{ion}}$) as a function of spectroscopic redshift (left) and absolute UV magnitude (right) for JADES-GS-z14-0 compared to the literature. JADES-GS-z14-0 has $\log_{10}(\xi_{\mathrm{ion}}) \approx 25.3 \pm 0.1\ \mathrm{Hz\ erg^{-1}}$, among the highest values measured at any redshift. |
-| Figure&nbsp;6 | <nobr>`O32_vs_R3_and_R23.{jpg,pdf,png}`</nobr> | Strong-line emission-line ratio diagnostics: O32 versus R3 (left) and O32 versus R23 (right) for JADES-GS-z14-0 overlaid on the grid of Cue photoionization models. These diagrams constrain the ionization parameter ($\log_{10} U \gtrsim -2.4$) and oxygen abundance ($12 + \log_{10}(\mathrm{O/H}) \approx 7.5 \pm 0.2$). |
+| Figure&nbsp;6 | <nobr>`O32_vs_R3_and_R23.{jpg,pdf,png}`</nobr> | Strong emission-line ratio diagnostics: O32 versus R3 (left) and O32 versus R23 (right) for JADES-GS-z14-0 overlaid on the grid of Cue photoionization models. These diagrams constrain the ionization parameter ($\log_{10} U \gtrsim -2.4$) and oxygen abundance ($12 + \log_{10}(\mathrm{O/H}) \approx 7.5 \pm 0.2$). |
 | Figure&nbsp;7 | <nobr>`logCtoO_vs_logOtoH.{jpg,pdf,png}`</nobr> | Carbon-to-oxygen ratio ($[\mathrm{C/O}]$) versus gas-phase oxygen abundance ($12 + \log_{10}(\mathrm{O/H})$) for JADES-GS-z14-0 compared to literature measurements in high-redshift galaxies and local H II regions. JADES-GS-z14-0 has $[\mathrm{C/O}] \approx -0.4 \pm 0.2$, consistent with enrichment primarily by massive, short-lived stars with limited carbon contribution from AGB stars. |
 | Figure&nbsp;8 | <nobr>`Cue_results_corner.{jpg,pdf,png}`</nobr> | Joint posterior probability distributions from the Cue neural-network photoionization model fitting to the observed emission line fluxes. Constrained parameters include gas-phase metallicity, ionization parameter, hydrogen gas density ($n_{\mathrm{H}} \approx 690 \pm 200\ \mathrm{cm^{-3}}$), and carbon-to-oxygen ratio. |
 
@@ -196,7 +196,7 @@ If you use these data or scripts in your research, please cite:
                    {Carniani}, Stefano and {Leja}, Joel and {Li}, Yijia and
                    {Rinaldi}, Pierluigi and {Scholtz}, Jan and {Stone}, Meredith and
                    {Willmer}, Christopher N.~A. and {Wu}, Zihao and {Baker}, William M. and
-                   {Bunker}, Andrew J. and {Charlot}, Stephane and {Chevallard}, Jacopo and
+                   {Bunker}, Andrew J. and {Charlot}, St{\'e}phane and {Chevallard}, Jacopo and
                    {Cleri}, Nikko J. and {Curti}, Mirko and {Curtis-Lake}, Emma and
                    {Egami}, Eiichi and {Eisenstein}, Daniel J. and {Jakobsen}, Peter and
                    {Ji}, Zhiyuan and {Johnson}, Benjamin D. and {Kumari}, Nimisha and
@@ -223,5 +223,4 @@ MAST data DOI: [10.17909/vpjw-b773](https://doi.org/10.17909/vpjw-b773)
 
 ## Data Availability
 
-Raw uncalibrated JWST files for Program 8544 are publicly available via MAST:
-https://mast.stsci.edu/search/ui/#/jwst (Program ID: 8544)
+Raw uncalibrated JWST files for Program 8544 are publicly available via [MAST](https://mast.stsci.edu/search/ui/#/jwst) (Program ID: 8544).
