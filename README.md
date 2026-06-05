@@ -168,7 +168,7 @@ Key capabilities include:
 - **Stage 2** (`Spec2Pipeline`): Custom V2/V3 reference coordinate tweaks to correct pointing offsets, nod-pair background subtraction, sigma-clipping and bad-pixel masking, and trace-region masking
 - **Stage 3** (`Spec3Pipeline`): Spectral combination and optimal 1D extraction using the modified association files in `data/`
 
-The script requires the `REDUCTIONS_MIRI` environment variable to be set to the root directory of the local reduction tree. Usage examples covering all four observations are included in the script's top-level docstring.
+The script requires the `REDUCTIONS_MIRI` environment variable to be set to the root directory of the local reduction tree. PSF model and resolving power table (`jwst_miri_psf_0002.fits` and `resolving_power.csv`) must be copied from `data/` into the `REDUCTIONS_MIRI` directory before running. Usage examples covering all four observations are included in the script's top-level docstring.
 
 ---
 

@@ -39,7 +39,7 @@ processed through the standard Spec3Pipeline. Custom corrections and manual
 post-processing steps were added to improve the final data quality.
 
 -------------------------
-FILES INCLUDED (26 total)
+FILES INCLUDED (28 total)
 -------------------------
 
 jw08544_obsAll_t001_miri_p750l_s2d.fits         (~ 1.1 MB)
@@ -59,6 +59,18 @@ jw08544_obsAll_t001_miri_p750l_{8–15}_x1d.fits  (~ 224 KB each; 8 files)
 jw08544_obsAll_t001_miri_p750l_{16–23}_x1d.fits (~ 224 KB each; 8 files)
     Individual 1D spectra for each of the 8 exposures from Obs 004
     (UT 2026 January 1–2).
+
+jwst_miri_psf_0002.fits                              (~ 4.8 MB)
+    Empirical MIRI/LRS PSF model (CRDS reference; pedigree: INFLIGHT
+    2022-05-26 - 2024-08-05; author: A. Petric, STScI). Used to model
+    the spatial PSF profile during optimal spectral extraction.
+
+resolving_power.csv                                  (~ 270 B)
+    Tabulated spectral resolving power (R = lambda / Delta_lambda)
+    versus observed-frame wavelength for MIRI/LRS. Two columns:
+    x (wavelength, microns) and y (resolving power R). Used to set
+    the instrumental line spread function width during emission line
+    fitting.
 
 -------------------
 FITS FILE STRUCTURE
