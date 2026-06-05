@@ -71,8 +71,8 @@ Output data products from Stage 3 of the JWST Calibration Pipeline. See `data/Re
 
 | File | Size | Description |
 |---|---|---|
-| `jw08544_obsAll_t001_miri_p750l_s2d.fits` | ~1.1&nbsp;MB | Combined rectified 2D spectrum from all 24 exposures |
-| `jw08544_obsAll_t001_miri_p750l_x1d.fits` | ~196&nbsp;KB | Combined 1D extracted spectrum from all 24 exposures |
+| `jw08544_obsAll_t001_miri_p750l_s2d.fits` | ~1.1&nbsp;MB | Combined rectified 2D spectrum<br>From all 24 exposures (Obs 002, 003, and 004) |
+| `jw08544_obsAll_t001_miri_p750l_x1d.fits` | ~196&nbsp;KB | Combined 1D extracted spectrum<br>From all 24 exposures (Obs 002, 003, and 004) |
 | `jw08544_obsAll_t001_miri_p750l_0_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 0 (Obs 002) |
 | `jw08544_obsAll_t001_miri_p750l_1_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 1 (Obs 002) |
 | `jw08544_obsAll_t001_miri_p750l_2_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 2 (Obs 002) |
@@ -107,7 +107,7 @@ Calibration reference and supporting data files required by `PID08544_Reduction_
 | File | Size | Description |
 |---|---|---|
 | `jwst_miri_psf_0002.fits` | ~4.8&nbsp;MB | Empirical MIRI/LRS PSF model (CRDS reference; pedigree: INFLIGHT 2022-05-26 – 2024-08-05; author: A. Petric, STScI). Used to model the spatial PSF profile during optimal spectral extraction. |
-| `resolving_power.csv` | ~270&nbsp;B | Tabulated spectral resolving power ($R = \lambda / \Delta\lambda$) versus observed-frame wavelength for MIRI/LRS. Two columns: `x` (wavelength, $\mu$m) and `y` (resolving power $R$). Used to set the instrumental line spread function width during emission line fitting. |
+| `resolving_power.csv` | ~270&nbsp;B | Tabulated spectral resolving power ($R = \lambda / \Delta\lambda$) versus observed-frame wavelength for MIRI/LRS. Two columns: `x` (wavelength, μm) and `y` (resolving power $R$). Used to set the instrumental line spread function width during emission line fitting. |
 
 #### Empirical Covariance Matrix
 
