@@ -71,32 +71,32 @@ Output data products from Stage 3 of the JWST Calibration Pipeline. See `data/Re
 
 | File | Size | Description |
 |---|---|---|
-| `jw08544_obsAll_t001_miri_p750l_s2d.fits` | ~1.1&nbsp;MB | Combined rectified 2D spectrum<br>From all 24 exposures (Obs 002, 003, and 004) |
-| `jw08544_obsAll_t001_miri_p750l_x1d.fits` | ~196&nbsp;KB | Combined 1D extracted spectrum<br>From all 24 exposures (Obs 002, 003, and 004) |
-| `jw08544_obsAll_t001_miri_p750l_0_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 0 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_1_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 1 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_2_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 2 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_3_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 3 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_4_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 4 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_5_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 5 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_6_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 6 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_7_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 7 (Obs 002) |
-| `jw08544_obsAll_t001_miri_p750l_8_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 8 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_9_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 9 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_10_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 10 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_11_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 11 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_12_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 12 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_13_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 13 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_14_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 14 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_15_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 15 (Obs 003) |
-| `jw08544_obsAll_t001_miri_p750l_16_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 16 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_17_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 17 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_18_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 18 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_19_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 19 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_20_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 20 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_21_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 21 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_22_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 22 (Obs 004) |
-| `jw08544_obsAll_t001_miri_p750l_23_x1d.fits` | ~224&nbsp;KB | Individual 1D spectrum<br>Exposure 23 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_s2d.fits` | ~1.1&nbsp;MB | Combined 2D rectified spectrum<br>All 24 exposures (Obs 002, 003, and 004) |
+| `jw08544_obsAll_t001_miri_p750l_x1d.fits` | ~196&nbsp;KB | Combined 1D extracted spectrum<br>All 24 exposures (Obs 002, 003, and 004) |
+| `jw08544_obsAll_t001_miri_p750l_0_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 0 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_1_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 1 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_2_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 2 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_3_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 3 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_4_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 4 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_5_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 5 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_6_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 6 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_7_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 7 (Obs 002) |
+| `jw08544_obsAll_t001_miri_p750l_8_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 8 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_9_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 9 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_10_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 10 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_11_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 11 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_12_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 12 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_13_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 13 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_14_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 14 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_15_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 15 (Obs 003) |
+| `jw08544_obsAll_t001_miri_p750l_16_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 16 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_17_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 17 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_18_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 18 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_19_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 19 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_20_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 20 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_21_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 21 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_22_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 22 (Obs 004) |
+| `jw08544_obsAll_t001_miri_p750l_23_x1d.fits` | ~224&nbsp;KB | Individual 1D extracted spectrum<br>Exposure 23 (Obs 004) |
 
 The 24 individual x1d files (exposures 0–23) allow verification of signal consistency across exposures and visits. They are also used to construct the empirical covariance matrix described below. Note that the flux uncertainties in the combined x1d file underestimate the true per-channel noise by approximately 40–45%; the empirical covariance matrix should be used for any quantitative analysis.
 
@@ -107,7 +107,7 @@ Calibration reference and supporting data files required by `PID08544_Reduction_
 | File | Size | Description |
 |---|---|---|
 | `jwst_miri_psf_0002.fits` | ~4.8&nbsp;MB | Empirical MIRI/LRS PSF model (CRDS reference; pedigree: INFLIGHT 2022-05-26 – 2024-08-05; author: A. Petric, STScI). Used to model the spatial PSF profile during optimal spectral extraction. |
-| `resolving_power.csv` | ~270&nbsp;B | Tabulated spectral resolving power ($R = \lambda / \Delta\lambda$) versus observed-frame wavelength for MIRI/LRS. Two columns: `x` (wavelength, μm) and `y` (resolving power $R$). Used to set the instrumental line spread function width during emission line fitting. |
+| `resolving_power.csv` | ~270&nbsp;B | Tabulated spectral resolving power ($R = \lambda / \Delta\lambda$) versus observed-frame wavelength for MIRI/LRS. Two columns: `x` (wavelength, $\mu\mathrm{m}$) and `y` (resolving power $R$). Used to set the instrumental line spread function width during emission line fitting. |
 
 #### Empirical Covariance Matrix
 
