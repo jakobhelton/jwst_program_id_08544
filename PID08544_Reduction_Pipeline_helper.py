@@ -2657,9 +2657,9 @@ def plot_slit_overlay(directories):
 
     try:
 
-        F444W = fits.open(f'{directories[0]['Thumbnails']}/183348_size_20p0_arcsec_NRC_F444W.fits')
-        F277W = fits.open(f'{directories[0]['Thumbnails']}/183348_size_20p0_arcsec_NRC_F277W.fits')
-        F115W = fits.open(f'{directories[0]['Thumbnails']}/183348_size_20p0_arcsec_NRC_F115W.fits')
+        F444W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F444W*.fits'))[0])
+        F277W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F277W*.fits'))[0])
+        F115W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F115W*.fits'))[0])
 
         F444W_head, F444W_data = F444W[1].header, F444W[1].data
         F277W_head, F277W_data = F277W[1].header, F277W[1].data
@@ -2702,8 +2702,6 @@ def plot_slit_overlay(directories):
 
     for i, directory in enumerate(directories):
 
-        ObsNumber = directory['Obs'].split('Obs')[-1].split('/')[0]
-
         temp_temp_pathname = directory['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2')
 
         filenames_assign_wcs = sorted(glob.glob(os.path.join(temp_temp_pathname, '*assign_wcs.fits')))
@@ -2716,63 +2714,42 @@ def plot_slit_overlay(directories):
 
         for j, filename_assign_wcs in enumerate(filenames_assign_wcs[::2]):
 
-            if False:
+            model_Nod1 = datamodels.open(filename_assign_wcs)
 
-                Nod2 = fits.open(filename_assign_wcs.replace('00001', '00002'))
-                Nod2_head_0 = Nod2[0].header
-                Nod2_head = Nod2[1].header
-                Nod2.close()
+            sregion_Nod1 = model_Nod1.meta.wcsinfo.s_region
+            target_RA_Nod1 =float(model_Nod1.meta.target.ra)
+            target_DEC_Nod1 = float(model_Nod1.meta.target.dec)
+            nod_number_Nod1 = model_Nod1.meta.dither.position_number
+            obs_number_Nod1 = model_Nod1.meta.observation.observation_number
+            footprint_Nod1 = util.sregion_to_footprint(sregion_Nod1)
 
-                Nod1 = fits.open(filename_assign_wcs)
-                Nod1_head_0 = Nod1[0].header
-                Nod1_head = Nod1[1].header
-                Nod1.close()
+            slit_RAs_Nod1 = np.array(footprint_Nod1[:, 0], dtype=float)
+            slit_DECs_Nod1 = np.array(footprint_Nod1[:, 1], dtype=float)
+            slit_DECs_Nod1 = np.append(slit_DECs_Nod1, slit_DECs_Nod1[0]).tolist()
+            slit_RAs_Nod1 = np.append(slit_RAs_Nod1, slit_RAs_Nod1[0]).tolist()
 
-                target_RA_Nod1, target_DEC_Nod1 = float(Nod1_head_0['TARG_RA']), float(Nod1_head_0['TARG_DEC'])
-                slit_RAs_Nod1 = np.array(Nod1_head['S_REGION'].split(' ')[3:][0::2], dtype=float)
-                slit_DECs_Nod1 = np.array(Nod1_head['S_REGION'].split(' ')[3:][1::2], dtype=float)
-                slit_DECs_Nod1 = np.append(slit_DECs_Nod1, slit_DECs_Nod1[0]).tolist()
-                slit_RAs_Nod1 = np.append(slit_RAs_Nod1, slit_RAs_Nod1[0]).tolist()
+            model_Nod2 = datamodels.open(filename_assign_wcs.replace('00001', '00002'))
 
-                target_RA_Nod2, target_DEC_Nod2 = float(Nod2_head_0['TARG_RA']), float(Nod2_head_0['TARG_DEC'])
-                slit_RAs_Nod2 = np.array(Nod2_head['S_REGION'].split(' ')[3:][0::2], dtype=float)
-                slit_DECs_Nod2 = np.array(Nod2_head['S_REGION'].split(' ')[3:][1::2], dtype=float)
-                slit_DECs_Nod2 = np.append(slit_DECs_Nod2, slit_DECs_Nod2[0]).tolist()
-                slit_RAs_Nod2 = np.append(slit_RAs_Nod2, slit_RAs_Nod2[0]).tolist()
+            sregion_Nod2 = model_Nod2.meta.wcsinfo.s_region
+            target_RA_Nod2 =float(model_Nod2.meta.target.ra)
+            target_DEC_Nod2 = float(model_Nod2.meta.target.dec)
+            nod_number_Nod2 = model_Nod2.meta.dither.position_number
+            obs_number_Nod2 = model_Nod2.meta.observation.observation_number
+            footprint_Nod2 = util.sregion_to_footprint(sregion_Nod2)
 
-                Coordinates.append([[ObsNumber], 
-                    [slit_RAs_Nod1, slit_DECs_Nod1], [slit_RAs_Nod2, slit_DECs_Nod2], 
-                    [target_RA_Nod1, target_DEC_Nod1], [target_RA_Nod2, target_DEC_Nod2], 
-                ])
+            slit_RAs_Nod2 = np.array(footprint_Nod2[:, 0], dtype=float)
+            slit_DECs_Nod2 = np.array(footprint_Nod2[:, 1], dtype=float)
+            slit_DECs_Nod2 = np.append(slit_DECs_Nod2, slit_DECs_Nod2[0]).tolist()
+            slit_RAs_Nod2 = np.append(slit_RAs_Nod2, slit_RAs_Nod2[0]).tolist()
 
-            else:
+            assert obs_number_Nod1 == obs_number_Nod2, f'Observation numbers for Nod1 and Nod2 must match.'
 
-                model_Nod2 = datamodels.open(filename_assign_wcs.replace('00001', '00002'))
-                sregion_Nod2 = model_Nod2.meta.wcsinfo.s_region
-                target_RA_Nod2 =float(model_Nod2.meta.target.ra)
-                target_DEC_Nod2 = float(model_Nod2.meta.target.dec)
-                nod_number_Nod2 = model_Nod2.meta.dither.position_number
-                footprint_Nod2 = util.sregion_to_footprint(sregion_Nod2)
-                slit_RAs_Nod2 = np.array(footprint_Nod2[:, 0], dtype=float)
-                slit_DECs_Nod2 = np.array(footprint_Nod2[:, 1], dtype=float)
-                slit_DECs_Nod2 = np.append(slit_DECs_Nod2, slit_DECs_Nod2[0]).tolist()
-                slit_RAs_Nod2 = np.append(slit_RAs_Nod2, slit_RAs_Nod2[0]).tolist()
+            ObsNumber = obs_number_Nod1
 
-                model_Nod1 = datamodels.open(filename_assign_wcs)
-                sregion_Nod1 = model_Nod1.meta.wcsinfo.s_region
-                target_RA_Nod1 =float(model_Nod1.meta.target.ra)
-                target_DEC_Nod1 = float(model_Nod1.meta.target.dec)
-                nod_number_Nod1 = model_Nod1.meta.dither.position_number
-                footprint_Nod1 = util.sregion_to_footprint(sregion_Nod1)
-                slit_RAs_Nod1 = np.array(footprint_Nod1[:, 0], dtype=float)
-                slit_DECs_Nod1 = np.array(footprint_Nod1[:, 1], dtype=float)
-                slit_DECs_Nod1 = np.append(slit_DECs_Nod1, slit_DECs_Nod1[0]).tolist()
-                slit_RAs_Nod1 = np.append(slit_RAs_Nod1, slit_RAs_Nod1[0]).tolist()
-
-                Coordinates.append([[ObsNumber], 
-                    [slit_RAs_Nod1, slit_DECs_Nod1], [slit_RAs_Nod2, slit_DECs_Nod2], 
-                    [target_RA_Nod1, target_DEC_Nod1], [target_RA_Nod2, target_DEC_Nod2], 
-                ])
+            Coordinates.append([[ObsNumber], 
+                [slit_RAs_Nod1, slit_DECs_Nod1], [slit_RAs_Nod2, slit_DECs_Nod2], 
+                [target_RA_Nod1, target_DEC_Nod1], [target_RA_Nod2, target_DEC_Nod2], 
+            ])
 
         # Plots the slit on an RGB image around the target galaxy using the previously read in thumbnails
 
@@ -2838,7 +2815,7 @@ def plot_slit_overlay(directories):
 
         if True:
 
-            temp_colors = sns.color_palette('husl', len(Coordinates))
+            temp_colors = sns.color_palette('husl', 2*len(Coordinates))
 
             for i, Coordinate in enumerate(Coordinates):
 
@@ -2851,9 +2828,9 @@ def plot_slit_overlay(directories):
                 coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
 
                 ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
-                    color=temp_colors[i], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod1}}$', zorder=i)
+                    color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod1}}$', zorder=i)
                 ax.plot(coords_slit_Nod2[0].tolist(), coords_slit_Nod2[1].tolist(), 
-                    color=temp_colors[i], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod2}}$', zorder=i)
+                    color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod2}}$', zorder=i)
 
                 ax.plot(coords_target_Nod1[0].tolist(), coords_target_Nod1[1].tolist(), 
                     color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
