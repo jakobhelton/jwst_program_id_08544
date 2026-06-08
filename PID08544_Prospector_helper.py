@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/05 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/08 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -208,8 +208,6 @@ import matplotlib.pyplot as plt
 
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 
-matplotlib.rcParams['text.usetex'] = True
-
 colors_8 = sns.color_palette('husl', 8)
 colors_7 = sns.color_palette('husl', 7)
 colors_6 = sns.color_palette('husl', 6)
@@ -218,6 +216,41 @@ colors_4 = sns.color_palette('husl', 4)
 colors_3 = sns.color_palette('husl', 3)
 colors_2 = sns.color_palette('husl', 2)
 colors_1 = sns.color_palette('husl', 1)
+
+matplotlib.rcParams.update({
+
+    'text.usetex': True,
+
+    'font.size': 16,
+    'axes.labelsize': 20,
+    'axes.titlesize': 20,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+
+    'xtick.direction': 'out',
+    'ytick.direction': 'out',
+    'xtick.top': True, # ticks on top spine
+    'xtick.left': True, # ticks on left spine
+    'ytick.right': True, # ticks on right spine
+    'ytick.bottom': True, # ticks on bottom spine
+    'xtick.minor.visible': True, # draw minor ticks by default
+
+    'xtick.major.size': 6,
+    'ytick.major.size': 6,
+    'xtick.minor.size': 4,
+    'ytick.minor.size': 4,
+    'xtick.major.width': 3,
+    'ytick.major.width': 3,
+    'xtick.minor.width': 3,
+    'ytick.minor.width': 3,
+
+    'axes.linewidth': 3,
+    'lines.linewidth': 3,
+
+    'savefig.dpi': 300,
+    'savefig.bbox': 'tight',
+
+})
 
 # Defines the standard cosmology from Planck18
 # Reference: https://www.scixplorer.org/abs/2020A&A...641A...6P/abstract
@@ -938,7 +971,7 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     elif agebin1 is None or np.log10(1.0e+9*tuniv) <= agebin1:
 
-        agelims = np.linspace(0.0, np.log10(1.0e+9*tuniv), nbins+1).tolist()
+        agelims = [0] + np.linspace(6.0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
     elif agebin2 is None or np.log10(1.0e+9*tuniv) <= agebin2:
 
@@ -956,7 +989,7 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     if np.amin(np.diff(np.power(10, np.array([agelims[:-1], agelims[1:]])))) < 1e+6:
 
-        agelims = np.linspace(0.0, np.log10(1.0e+9*tuniv), nbins+1).tolist()
+        agelims = [0] + np.linspace(6.0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
     agebins = np.array([agelims[:-1], agelims[1:]])
 
@@ -1913,7 +1946,6 @@ def extract_model_predictions(model, result, observations, stellarPopulationSynt
 
             theta = theta[new_indices]
 
-        # predictions, mfrac = model.predict(theta, observations=observations, sps=stellarPopulationSynthesis)
         predictions, mfrac = predict_Prospector(model, theta, observations, stellarPopulationSynthesis)
         predictions = [prediction.tolist() for prediction in predictions]
         smoothed_spectrum = model._smooth_spec
