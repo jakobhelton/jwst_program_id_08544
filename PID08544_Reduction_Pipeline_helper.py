@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/05 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/08 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -456,13 +456,13 @@ if os.environ.get('REDUCTIONS_MIRI') is not None:
 
         fwhms_pixels.append(fwhm_pixels); fwhms_arcseconds.append(fwhm_arcseconds)
 
-    temp_wave_psf = np.array(wave_psf)
+    wavelength_psf = np.array(wave_psf)
     temp_fwhms_pixels = np.array(fwhms_pixels)
     temp_fwhms_arcseconds = np.array(fwhms_arcseconds)
 
-    temp_condition_psf = ~np.isnan(temp_wave_psf)
+    temp_condition_psf = ~np.isnan(wavelength_psf)
 
-    temp_data_psf = np.c_[temp_wave_psf, temp_fwhms_pixels, temp_fwhms_arcseconds][temp_condition_psf][::-1]
+    temp_data_psf = np.c_[wavelength_psf, temp_fwhms_pixels, temp_fwhms_arcseconds][temp_condition_psf][::-1]
 
     np.savetxt(f'{pathname_reductions}/jwst_miri_psf_0002.txt', temp_data_psf)
 
@@ -3879,13 +3879,13 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                 if directories['AssociationFiles'] is None:
 
-                    obs_number = int(os.path.basename(filenames_cal[0]).split('jw')[1][5:8])
-
-                    association_inputs = [(filenames_cal, f'Obs{obs_number:03d}_association.json')]
-
                     if extra_directories_for_spec3:
 
                         all_filenames_cal = filenames_cal.copy()
+
+                        obs_number = int(os.path.basename(filenames_cal[0]).split('jw')[1][5:8])
+
+                        association_inputs = [(filenames_cal, f'Obs{obs_number:03d}_association.json')]
 
                         for extra_directories in extra_directories_for_spec3:
 
@@ -3903,6 +3903,19 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                         
                         association_inputs.append((all_filenames_cal, 'All_association.json'))
 
+                    else:
+
+                        obs_numbers = set(int(os.path.basename(f).split('jw')[1][5:8]) 
+                            for f in filenames_cal)
+
+                        if len(obs_numbers) > 1:
+
+                            association_inputs = [(filenames_cal, 'All_association.json')]
+
+                        else:
+
+                            association_inputs = [(filenames_cal, f'Obs{next(iter(obs_numbers)):03d}_association.json')]
+
                     level3_association_files = [create_level3_association(None, filenames, 
                         suffix=suffix) for filenames, suffix in association_inputs]
 
@@ -3918,13 +3931,13 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                 filenames_bsub = sorted(glob.glob(os.path.join(temp_pathname, temp_filename)))
 
-                obs_number = int(os.path.basename(filenames_bsub[0]).split('jw')[1][5:8])
-
-                association_inputs = [(filenames_bsub, f'Obs{obs_number:03d}_combined_association.json')]
-
                 if extra_directories_for_spec3:
 
                     all_filenames_bsub = filenames_bsub.copy()
+
+                    obs_number = int(os.path.basename(filenames_bsub[0]).split('jw')[1][5:8])
+
+                    association_inputs = [(filenames_bsub, f'Obs{obs_number:03d}_combined_association.json')]
 
                     for extra_directories in extra_directories_for_spec3:
 
@@ -3943,6 +3956,19 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                         all_filenames_bsub.extend(extra_filenames_bsub)
 
                     association_inputs.append((all_filenames_bsub, 'All_combined_association.json'))
+
+                else:
+
+                    obs_numbers = set(int(os.path.basename(f).split('jw')[1][5:8]) 
+                        for f in filenames_bsub)
+
+                    if len(obs_numbers) > 1:
+
+                        association_inputs = [(filenames_bsub, 'All_combined_association.json')]
+
+                    else:
+
+                        association_inputs = [(filenames_bsub, f'Obs{next(iter(obs_numbers)):03d}_combined_association.json')]
 
                 level3_association_files = [create_level3_association(None, filenames, 
                     suffix=suffix) for filenames, suffix in association_inputs]
@@ -4168,6 +4194,331 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             plt.savefig(f'{directories['Analysis']}/{temp_filename_jpg}', dpi=300, bbox_inches='tight')
 
     # Finished!
+
+###
+
+def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galaxy_name=r'\boldmath$\mathrm{JADES-GS-z14-0}$', 
+    colorbar='SNR', wavelength_psf=None, fwhms_pixels=None, additional_offset=+0.0, f_noise=+1.0, 
+    xmin=+4.875, xmax=+10.375):
+
+    """
+    Plot the full 2D and 1D MIRI/LRS spectrum for a given galaxy.
+
+    Produces a two-panel figure -- the top panel shows the 2D spectral image
+    (s2d) with PSF-based extraction boundaries and emission-line markers,
+    and the bottom panel shows the 1D spectrum (x1d) with the same line
+    markers and a Balmer-limit indicator.
+
+    Saves both a raw and an LSF-smoothed version to 'pathname'.
+
+    Parameters:
+    -----------
+    pathname : str
+        Directory in which to save the output figures
+    pathname_s2d : str
+        Full path to the s2d FITS file
+    pathname_x1d : str
+        Full path to the x1d FITS file
+    zred : float
+        Redshift used to compute observed-frame emission-line wavelengths
+    galaxy_name : str
+        Galaxy identifier to be used as the figure suptitle (LaTeX accepted)
+    colorbar : str
+        Colorbar quantity for the 2D panel -- 'SNR' for the signal-to-noise per
+        pixel, or any other value for the per-pixel surface brightness in MJy/sr
+    wavelength_psf : array_like or None
+        Wavelength array [microns] for the PSF FWHM profile; if None, then the
+        extraction-boundary overlay is omitted and the smooth variant is skipped
+    fwhms_pixels : array_like or None
+        FWHM [pixels] at each `wavelength_psf` wavelength; if None, same as above
+    additional_offset : float
+        Pixel offset added to the extraction-profile centre (EXTRXSTR + EXTRXSTP) / 2
+    f_noise : float
+        Empirical noise inflation factor applied to the 1D error spectrum
+    xmin : float
+        Minimum observed wavelength [microns] for the plot's x-axis
+    xmax : float
+        Maximum observed wavelength [microns] for the plot's x-axis
+
+    Returns:
+    --------
+    None
+    """
+
+    # Compute observed-frame emission-line wavelengths at the target redshift
+
+    elines = return_observed_wavelengths(zred)
+
+    wave_O2__3727 = elines['wave_O2__3727']
+    wave_O2__3729 = elines['wave_O2__3729']
+    wave_Hb__4863 = elines['wave_Hb__4863']
+    wave_O3__4959 = elines['wave_O3__4959']
+    wave_O3__5007 = elines['wave_O3__5007']
+    wave_Ha__6565 = elines['wave_Ha__6565']
+
+    wavelengths_lines = np.array([
+        np.mean([wave_O2__3727, wave_O2__3729]),
+        wave_Hb__4863,
+        wave_O3__4959,
+        wave_O3__5007,
+        wave_Ha__6565,
+    ])
+
+    vlines = wavelengths_lines
+
+    # Read the 2D spectral image
+
+    with fits.open(pathname_s2d) as hdul_s2d:
+
+        wavelength_data_s2d = np.flip(hdul_s2d['WAVELENGTH'].data, axis=0).T
+
+        err_data = np.flip(hdul_s2d['ERR'].data, axis=0).T
+        sci_data = np.flip(hdul_s2d['SCI'].data, axis=0).T
+
+        PIXAR_A2 = hdul_s2d[1].header['PIXAR_A2']
+
+    # Read the 1D extracted spectrum
+
+    with fits.open(pathname_x1d) as hdul_x1d:
+
+        try:
+
+            data_x1d = hdul_x1d['EXTRACT1D'].data
+            column_names = data_x1d.columns.names
+
+            flux_error_data = data_x1d[np.array(column_names)[np.char.find(column_names, 'ERROR') != -1][0]]
+            wavelength_data = data_x1d.field(np.where(np.array(column_names) == 'WAVELENGTH')[0][0])
+            flux_data = data_x1d.field(np.where(np.array(column_names) == 'FLUX')[0][0])
+
+        except:
+
+            data_x1d = hdul_x1d['COMBINE1D'].data
+            column_names = data_x1d.columns.names
+
+            flux_error_data = data_x1d[np.array(column_names)[np.char.find(column_names, 'ERROR') != -1][0]][::-1]
+            wavelength_data = data_x1d.field(np.where(np.array(column_names) == 'WAVELENGTH')[0][0])[::-1]
+            flux_data = data_x1d.field(np.where(np.array(column_names) == 'FLUX')[0][0])[::-1]
+
+        try:
+
+            EXTRXSTR, EXTRXSTP = hdul_x1d[1].header['EXTRXSTR'], hdul_x1d[1].header['EXTRXSTP']
+
+        except:
+
+            EXTRXSTR, EXTRXSTP = 0, 64
+
+    # Compute extraction boundaries and LSF-smoothed spectrum when PSF arrays are available
+
+    xstep = +0.125
+    temp_xarray = np.linspace(xmin, xmax, 1001)
+
+    upper_extraction, lower_extraction = None, None
+    smoothed_flux_data, smoothed_flux_error_data = None, None
+
+    if wavelength_psf is not None and fwhms_pixels is not None:
+
+        temp_condition = np.logical_and(~np.isnan(wavelength_psf), ~np.isnan(fwhms_pixels))
+
+        interp_psf = scipy.interpolate.interp1d(wavelength_psf[temp_condition],
+            np.array(fwhms_pixels)[temp_condition], kind='cubic')
+
+        fwhms_interpolated = interp_psf(temp_xarray)
+
+        central_pixel = np.mean([EXTRXSTR, EXTRXSTP]) + additional_offset
+
+        upper_extraction = (central_pixel + fwhms_interpolated*(2.0/np.sqrt(2*np.log(2))))*np.ones(temp_xarray.shape)
+        lower_extraction = (central_pixel - fwhms_interpolated*(2.0/np.sqrt(2*np.log(2))))*np.ones(temp_xarray.shape)
+
+        interp_lsf = scipy.interpolate.interp1d(wavelength_psf[temp_condition],
+            np.array(fwhms_pixels)[temp_condition],
+            kind='cubic', fill_value='extrapolate')
+
+        fwhms_lsf = interp_lsf(wavelength_data)/(2.0*np.sqrt(2*np.log(2))); fwhms_lsf *= 2.0*0.11*fwhms_lsf/0.47
+
+        spec_data = specutils.Spectrum1D(
+            spectral_axis=wavelength_data*u.um, flux=flux_data*u.uJy,
+            uncertainty=astropy.nddata.StdDevUncertainty(flux_error_data*u.uJy))
+
+        lsf_flux, lsf_flux_err = [], []
+
+        for idx, temp_fwhm in enumerate(fwhms_lsf):
+
+            temp_smoothed = gaussian_smooth(spec_data, stddev=np.amax([1e-3, temp_fwhm]))
+            lsf_flux_err.append(temp_smoothed.uncertainty.quantity.value[idx])
+            lsf_flux.append(temp_smoothed.flux.value[idx])
+
+        smoothed_flux_data, smoothed_flux_error_data = np.array(lsf_flux), np.array(lsf_flux_err)
+
+    # Axis ticks and figure layout
+
+    smooth_variants = [True, False] if smoothed_flux_data is not None else [False]
+
+    xticks = list(np.arange(np.ceil(xmin/0.5)/2.0, xmax, 0.5))
+
+    for smooth in smooth_variants:
+
+        figsizex, figsizey = 12, 8
+
+        plt.close()
+        fig = plt.figure(figsize=(figsizex, figsizey), constrained_layout=True)
+        grid = matplotlib.gridspec.GridSpec(2, 1, height_ratios=[1.0, 1.0], hspace=0.125, wspace=0.125)
+
+        fig.suptitle(galaxy_name, x=0.515, y=1.025, fontsize=20)
+
+        for panel_index, panel_axis in enumerate(grid):
+
+            if panel_index == 0:
+
+                # 2D spectral image panel
+
+                ax = plt.subplot(panel_axis)
+
+                ax.tick_params(axis='both', which='major', direction='out',
+                    bottom=True, top=True, left=True, right=True, length=8, width=3, labelsize=16)
+                ax.tick_params(axis='both', which='minor', direction='out',
+                    bottom=True, top=True, left=True, right=True, length=6, width=3, labelsize=16)
+
+                data = sci_data/err_data if colorbar == 'SNR' else sci_data
+
+                index_xmin = np.argmin(np.absolute(np.nanmean(wavelength_data_s2d, axis=0) - xmin))
+                index_xmax = np.argmin(np.absolute(np.nanmean(wavelength_data_s2d, axis=0) - xmax))
+
+                temp_xmin = np.nanmean(wavelength_data_s2d[:, index_xmin - 1])
+                temp_xmax = np.nanmean(wavelength_data_s2d[:, index_xmax + 1])
+
+                temp_cond = np.logical_and(temp_xmin <= wavelength_data_s2d, wavelength_data_s2d < temp_xmax)
+
+                data_masked = data.copy()
+                data_masked[~temp_cond] = np.nan
+                vmin_zscale, vmax_zscale = ZScaleInterval().get_limits(data_masked)
+
+                if colorbar == 'SNR': vmin_zscale, vmax_zscale = -3.75, +3.75
+
+                xx, yy = np.meshgrid(np.nanmean(wavelength_data_s2d[:, index_xmin:index_xmax], axis=0),
+                    np.arange(0, data.shape[0], 1))
+
+                temp_image = ax.pcolormesh(xx, yy, data[:, index_xmin:index_xmax], vmin=vmin_zscale, vmax=vmax_zscale,
+                    cmap=cmap, shading='face', edgecolors='face', lw=0, rasterized=True)
+
+                ymin_2d, ymax_2d = ax.get_ylim()
+
+                ax.vlines(vlines, ymax_2d-10+1, ymax_2d+1, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+                ax.vlines(vlines, ymin_2d+1, ymin_2d+10+1, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+
+                if upper_extraction is not None and lower_extraction is not None:
+
+                    ax.plot(temp_xarray, upper_extraction, c=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+                    ax.plot(temp_xarray, lower_extraction, c=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+
+                ax.set_xlim(xmin, xmax)
+                ax.set_ylim(0.0, data.shape[0])
+                ax.set_xticks(xticks); ax.set_xticklabels([])
+                ax.xaxis.set_minor_locator(MultipleLocator(xstep))
+                ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+
+                ax.set_ylabel(r'$\mathrm{Pixels}$' + '\n' +
+                    fr'$\left[ \mathrm{{{np.sqrt(PIXAR_A2):.2f}}}\ \mathrm{{arcsec/pixel}} \right]$',
+                    fontsize=20, labelpad=8)
+
+                cbar = fig.colorbar(temp_image, ax=ax, location='top', shrink=1.0, pad=0.1)
+
+                cbar.ax.tick_params(axis='both', which='major', direction='out',
+                    bottom=False, top=True, left=False, right=False, length=8, width=3, labelsize=16)
+                cbar.ax.tick_params(axis='both', which='minor', direction='out',
+                    bottom=False, top=True, left=False, right=False, length=6, width=3, labelsize=16)
+
+                if colorbar == 'SNR':
+
+                    cbar.set_label(r'$\mathrm{Signal\mathrm{-}to\mathrm{-}Noise\ Ratio\ Per\ Pixel}$', fontsize=20, labelpad=12)
+
+                else:
+
+                    cbar.set_label(r'$\mathrm{Surface\ Brightness\ \left[ MJy/sr \right]}$', fontsize=20, labelpad=12)
+
+                cbar.ax.xaxis.set_major_locator(plt.MaxNLocator(8))
+                cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(), va='center_baseline')
+                cbar.ax.xaxis.set_tick_params(pad=12)
+                cbar.outline.set_linewidth(3)
+
+                for spine in ['top', 'bottom', 'left', 'right']: ax.spines[spine].set_linewidth(3)
+
+            else:
+
+                # 1D spectrum panel
+
+                ax = plt.subplot(panel_axis)
+
+                ax.set_xlabel(r'$\mathrm{Observed\ Wavelength}\ \left[ \mathrm{microns} \right]$', fontsize=20)
+                ax.set_ylabel(r'$\mathrm{Flux\ Density}\ \left[ \mathrm{\mu Jy} \right]$', fontsize=20, labelpad=14)
+
+                ax.tick_params(axis='both', which='major', direction='out',
+                    bottom=True, top=True, left=True, right=True, length=8, width=3, labelsize=16)
+                ax.tick_params(axis='both', which='minor', direction='out',
+                    bottom=True, top=True, left=True, right=True, length=6, width=3, labelsize=16)
+
+                if not smooth: x, y, yerr = wavelength_data, 1e+6*flux_data, f_noise*1e+6*flux_error_data
+                else: x, y, yerr = wavelength_data, 1e+6*smoothed_flux_data, f_noise*1e+6*smoothed_flux_error_data
+
+                ax.fill_between(x, -1.0*yerr, +1.0*yerr, step='mid', color='darkgray', lw=0, alpha=0.6, zorder=1)
+                ax.plot(x, y, ds='steps-mid', c='k', lw=3, zorder=2)
+
+                ax.set_xlim(xmin, xmax)
+                ax.set_xticks(xticks)
+                ax.set_yticks([-0.4, +0.0, +0.4, +0.8])
+                ax.xaxis.set_minor_locator(MultipleLocator(xstep))
+                ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+
+                xarray = np.linspace(xmin, xmax, 1001)
+                ax.plot(xarray, np.zeros(xarray.shape), c='goldenrod', ls='-', lw=3, zorder=0)
+
+                ymin_1d, ymax_1d = -0.4, +0.8
+
+                ax.set_ylim(ymin_1d, ymax_1d)
+                ax.vlines(vlines, ymin_1d-1e-2, ymax_1d, colors=colors_5[3], ls=':', lw=3, alpha=1.0, zorder=0)
+
+                xspan = xmax - xmin
+
+                if np.logical_and(xmin < np.mean([wave_O2__3727, wave_O2__3729]), np.mean([wave_O2__3727, wave_O2__3729]) < xmax):
+
+                    ax.text(np.mean([wave_O2__3727, wave_O2__3729])+0.01*xspan, 0.950*ymax_1d,
+                        r'\boldmath$\leftarrow [\mathrm{OII}]\ \lambda\lambda 3727{,\:\!}3729$',
+                        c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
+
+                if np.logical_and(xmin < wave_Hb__4863, wave_Hb__4863 < xmax):
+
+                    ax.text(wave_Hb__4863-0.01*xspan, 0.945*ymax_1d,
+                        r'\boldmath$\mathrm{H}\beta \rightarrow$',
+                        c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
+
+                if np.logical_and(xmin < wave_O3__5007, wave_O3__5007 < xmax):
+
+                    ax.text(wave_O3__5007+0.01*xspan, 0.950*ymax_1d,
+                        r'\boldmath$\leftarrow [\mathrm{OIII}]\ \lambda\lambda 4959{,\:\!}5007$',
+                        c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
+
+                if np.logical_and(xmin < wave_Ha__6565, wave_Ha__6565 < xmax):
+
+                    ax.text(wave_Ha__6565-0.01*xspan, 0.941*ymax_1d,
+                        r'\boldmath$\mathrm{H}\alpha \rightarrow$',
+                        c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
+
+                if np.logical_and(xmin < 0.3646*(1.0+zred), 0.3646*(1.0+zred) < xmax):
+
+                    ax.vlines(0.3646*(1.0+zred), ymin_1d, +0.0, colors='grey', ls=':', lw=3, alpha=1.0, zorder=0)
+
+                    ax.text(0.3646*(1.0+zred)-0.094*xspan, 0.53*ymin_1d,
+                        r'\boldmath$\mathrm{Balmer}$' + '\n' + r'\boldmath$\mathrm{Limit} \rightarrow$',
+                        c='grey', fontsize=14, ha='left', va='top', zorder=2)
+
+                for spine in ['top', 'bottom', 'left', 'right']: ax.spines[spine].set_linewidth(3)
+
+        temp_filename = 'Full_Spectrum_Smooth' if smooth else 'Full_Spectrum'
+
+        plt.savefig(f'{pathname}/{temp_filename}.pdf', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{pathname}/{temp_filename}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{pathname}/{temp_filename}.jpg', dpi=300, bbox_inches='tight')
+
+        plt.show()
 
 ###
 
