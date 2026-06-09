@@ -952,9 +952,9 @@ def clean_rate_files(pathname, filenames, sigma_lower_threshold=3.0, sigma_upper
 
     # Defines the approximate location of the cutout box to be used
 
-    print(f'Cleaning rate files...')
-
     DO_NOT_USE = dqflags.pixel['DO_NOT_USE']
+
+    print(f'Cleaning rate files...')
 
     try:
 
@@ -2209,9 +2209,16 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
     # Defines the approximate location of the cutout box to be used
 
+    DO_NOT_USE = dqflags.pixel['DO_NOT_USE']
+
     print(f'Cleaning cal files...')
 
-    DO_NOT_USE = dqflags.pixel['DO_NOT_USE']
+    if len(filenames) < 4:
+
+        print(f'Skipping clean_cal_files: need >= 4 files for reliable cross-exposure '
+            f'sigma clipping, but only {len(filenames)} were provided.')
+
+        return
 
     try:
 
