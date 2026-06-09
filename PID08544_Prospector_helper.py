@@ -147,7 +147,7 @@ history type, and redshift for your own target.
 
     N = int(1e+4) + 1
     lin_lookback_times = np.linspace(+0.0, 1e+3*cosmo.age(observations[0].redshift).value, N)
-    log_lookback_times = np.logspace(+0.0, np.log10(1e+9*cosmo.age(observations[0].redshift).value), N)
+    log_lookback_times = np.logspace(+6.0, np.log10(1e+9*cosmo.age(observations[0].redshift).value), N)
 
     lookback_times, sfhs = helper.measure_star_formation_history(
         sfh_type, result, chain, theta_labels,
@@ -504,14 +504,27 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
         elif 'delayed' in sfh_type.lower() or 'tau' in sfh_type.lower():
 
-            model_params['tau'] = {
-                'name': 'exponential_e_folding_time', 
-                'units': 1.0/u.Gyr, 
-                'N': 1, 
-                'isfree': True, 
-                'init': 1.0, 
-                'prior': priors.LogUniform(mini=0.1, maxi=30.0), 
-            }
+            if zbirth is None:
+
+                model_params['tau'] = {
+                    'name': 'exponential_e_folding_time', 
+                    'units': 1.0/u.Gyr, 
+                    'N': 1, 
+                    'isfree': True, 
+                    'init': 1.0, 
+                    'prior': priors.LogUniform(mini=1e-3, maxi=transform_zbirth_to_tbirth(zred, 100.0)), 
+                }
+
+            else:
+
+                model_params['tau'] = {
+                    'name': 'exponential_e_folding_time', 
+                    'units': 1.0/u.Gyr, 
+                    'N': 1, 
+                    'isfree': True, 
+                    'init': 1.0, 
+                    'prior': priors.LogUniform(mini=1e-3, maxi=transform_zbirth_to_tbirth(zred, zbirth)), 
+                }
 
             model_params['const'] = {
                 'name': 'fraction_of_stars_in_constant_component', 
