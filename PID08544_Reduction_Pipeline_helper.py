@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/08 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/09 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -512,6 +512,11 @@ def run_detector1_pipeline(directories, custom_steps=None):
     """
 
     uncal_files = sorted(glob.glob(os.path.join(directories['Uncal'], '*_uncal.fits')))
+
+    # Removes files that were used for target acquisition (02101) and verification (3102)
+
+    uncal_files = [file for file in uncal_files if '_02101_' not in os.path.basename(file)]
+    uncal_files = [file for file in uncal_files if '_03102_' not in os.path.basename(file)]
 
     if not uncal_files:
 
