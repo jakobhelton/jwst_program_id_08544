@@ -2240,7 +2240,7 @@ def measure_star_formation_history(sfh_type, result, chain, theta_labels, lookba
 
             dictionary = {'const': 0.0, 'tage': temp_tage, 'mass': temp_mass, 'tau': temp_tau, 'sfh': 4}
 
-            sfhs.append(prosp.plotting.sfh.parametric_sfr(times=lookback_times, tavg=0.0, **dictionary))
+            sfhs.append(prosp.plotting.sfh.parametric_sfr(times=lookback_times/1e+9, tavg=0.0, **dictionary))
 
         return lookback_times, np.array(sfhs).T
 
@@ -2264,7 +2264,7 @@ def measure_star_formation_history(sfh_type, result, chain, theta_labels, lookba
 
             dictionary = {'const': 1.0, 'tage': temp_tage, 'mass': temp_mass, 'sfh': 4}
 
-            sfhs.append(prosp.plotting.sfh.parametric_sfr(times=lookback_times, tavg=0.0, **dictionary))
+            sfhs.append(prosp.plotting.sfh.parametric_sfr(times=lookback_times/1e+9, tavg=0.0, **dictionary))
 
         return lookback_times, np.array(sfhs).T
 
