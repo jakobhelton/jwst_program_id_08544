@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/08 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/09 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -230,9 +230,9 @@ matplotlib.rcParams.update({
     'xtick.direction': 'out',
     'ytick.direction': 'out',
     'xtick.top': True, # ticks on top spine
-    'xtick.left': True, # ticks on left spine
+    'ytick.left': True, # ticks on left spine
     'ytick.right': True, # ticks on right spine
-    'ytick.bottom': True, # ticks on bottom spine
+    'xtick.bottom': True, # ticks on bottom spine
     'xtick.minor.visible': True, # draw minor ticks by default
 
     'xtick.major.size': 6,
@@ -835,16 +835,16 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
         if contains_miri_lrs:
 
-            model_params['dispersion_correction_polynomial_0_miri_lrs'] = {
+            model_params['disp_corr_poly_0_miri_lrs'] = {
                 'name': 'dispersion_correction_polynomial_coefficient_0_miri_lrs', 
                 'units': None, 
                 'N': 1, 
                 'isfree': True, 
                 'init': 1.0, 
-                'prior': priors.LogUniform(mini=1e-1, maxi=1e+1), 
+                'prior': priors.LogUniform(mini=1e+0, maxi=1e+1), 
             }
 
-            model_params['dispersion_correction_polynomial_1_miri_lrs'] = {
+            model_params['disp_corr_poly_1_miri_lrs'] = {
                 'name': 'dispersion_correction_polynomial_coefficient_1_miri_lrs', 
                 'units': 1.0/u.um, 
                 'N': 1, 
@@ -1040,9 +1040,8 @@ def transform_eline_sigma_across_instruments(zred=0.0, eline_sigma_nirspec=100.0
     return np.where(obs_wavelength_microns < pivot_wavelength_microns, nirspec_sigma, miri_sigma)
 
 def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0, eline_sigma_nirspec=100.0, 
-    dispersion_correction_polynomial_0_miri_lrs=1.0, dispersion_correction_polynomial_1_miri_lrs=0.0, 
-    minimum_wavelength_microns_miri_lrs=5.3, maximum_wavelength_microns_miri_lrs=10.3, 
-    pivot_wavelength_microns_miri_lrs=7.5, **dictionary_for_extras):
+    disp_corr_poly_0_miri_lrs=1.0, disp_corr_poly_1_miri_lrs=0.0, minimum_wavelength_microns_miri_lrs=5.3, 
+    maximum_wavelength_microns_miri_lrs=10.3, **dictionary_for_extras):
 
     # This is relevant for allowing the emission line velocity dispersion to be different across different instruments
     # We want to accurately model the spectrophotometric calibration of the spectrum across the full wavelength range
@@ -1062,12 +1061,13 @@ def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0
     sigma_instrument_miri = astropy.constants.c.to('km/s').value/(np.sqrt(4.0*np.log(4.0))*resolution_miri_lrs)
     # Convert to instrumental resolution at each wavelength point in units of km/s
 
-    polynomial_correction = (np.atleast_1d(dispersion_correction_polynomial_0_miri_lrs)[0]
-        + np.atleast_1d(dispersion_correction_polynomial_1_miri_lrs)[0]*(obs_wavelength_microns - pivot_wavelength_microns_miri_lrs))
+    P0 = np.atleast_1d(disp_corr_poly_0_miri_lrs)[0]
+    P1 = np.atleast_1d(disp_corr_poly_1_miri_lrs)[0]
+    pivot_wavelength_microns = minimum_wavelength_microns_miri_lrs if P1 >= 0.0 else maximum_wavelength_microns_miri_lrs
+    polynomial_correction = P0 + P1*(obs_wavelength_microns - pivot_wavelength_microns)
 
-    miri_sigma = np.sqrt(np.maximum(0.0,
-        np.square(nirspec_sigma) + np.square(sigma_instrument_miri)*(np.square(polynomial_correction) - 1.0)
-    ))
+    miri_sigma = np.sqrt(np.maximum(0.0, 
+        np.square(nirspec_sigma) + np.square(sigma_instrument_miri)*(np.square(polynomial_correction) - 1.0)))
 
     condition = np.logical_or(obs_wavelength_microns < minimum_wavelength_microns_miri_lrs, 
         maximum_wavelength_microns_miri_lrs < obs_wavelength_microns)
