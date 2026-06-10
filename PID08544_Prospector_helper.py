@@ -1343,7 +1343,7 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
 # Defines function for making a trace plot from an hfile
 
-def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03):
+def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03, show=True):
 
     # Reads in posterior properties from the provided Prospector hfile
 
@@ -1476,14 +1476,16 @@ def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03):
     plt.savefig(f'{hfile.replace(".h5", "/Trace_Plot")}.png', dpi=300, bbox_inches='tight')
     plt.savefig(f'{hfile.replace(".h5", "/Trace_Plot")}.jpg', dpi=300, bbox_inches='tight')
 
-    plt.show()
+    if show: plt.show()
+
+    return fig
 
 ###
 
 # Defines function for making a corner plot from input data
 
 def make_corner_plot(hfile, weights_new, table, xarray, smooth=+0.0, lw=2, nbins=20, max_n_ticks=4, levels=[+0.68, +0.95, +0.99], 
-    highlight_panel=None, filename_suffix=None, sfh_arguments=None):
+    highlight_panel=None, filename_suffix=None, sfh_arguments=None, show=True):
 
     # Defines the dictionary containing arguments for the SFH, if none are provided
 
@@ -1658,13 +1660,15 @@ def make_corner_plot(hfile, weights_new, table, xarray, smooth=+0.0, lw=2, nbins
         plt.savefig(f'{hfile.replace(".h5", "/Corner_Plot")}.png', dpi=300, bbox_inches='tight')
         plt.savefig(f'{hfile.replace(".h5", "/Corner_Plot")}.jpg', dpi=300, bbox_inches='tight')
 
-    plt.show()
+    if show: plt.show()
+
+    return fig
 
 ###
 
 # Defines function for making a star-formation history plot from input data
 
-def make_sfh_plot(hfile, weights_new, lw=3, sfh_arguments=None):
+def make_sfh_plot(hfile, weights_new, lw=3, sfh_arguments=None, show=True):
 
     # Defines the dictionary containing arguments for the SFH, if none are provided
 
@@ -1754,7 +1758,9 @@ def make_sfh_plot(hfile, weights_new, lw=3, sfh_arguments=None):
     plt.savefig(f'{hfile.replace(".h5", "/SFH_Plot.png")}', dpi=300, bbox_inches='tight')
     plt.savefig(f'{hfile.replace(".h5", "/SFH_Plot.jpg")}', dpi=300, bbox_inches='tight')
 
-    plt.show()
+    if show: plt.show()
+
+    return fig
 
 ###
 
