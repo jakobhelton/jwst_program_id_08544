@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/09 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/10 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -1440,6 +1440,11 @@ def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03):
     if True:
 
         ax = axes.flat[ndim-1]
+
+        ax.tick_params(axis='both', which='major', direction='out', 
+            bottom=True, top=True, left=True, right=True, length=6, width=lw, labelsize=12)
+        ax.tick_params(axis='both', which='minor', direction='out', 
+            bottom=True, top=True, left=True, right=True, length=4, width=lw, labelsize=12)
 
         for j in range(nwalk):
 
