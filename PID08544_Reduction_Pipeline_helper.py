@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/09 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/10 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -3696,12 +3696,12 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             # Inspect the spectra using only the s2d files
 
-            inspect_spectra(None, filenames_s2d, None, ellipses=False, 
+            inspect_spectra(None, filenames_s2d, None, ellipses=False, zred=zred, 
                 offset=offset, position_nod1=position_nod1, position_nod2=position_nod2)
 
             # Inspect the spectra using both the s2d and x1d files
 
-            inspect_spectra(None, filenames_s2d, filenames_x1d, ellipses=False, offset=offset)
+            inspect_spectra(None, filenames_s2d, filenames_x1d, ellipses=False, zred=zred, offset=offset)
 
             # Background subtract the s2d files by taking the difference between nods one and two
 
@@ -3759,7 +3759,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                 # Inspect the background subtracted s2d files
 
-                inspect_spectra(None, filenames, None, ellipses=True, 
+                inspect_spectra(None, filenames, None, ellipses=True, zred=zred, 
                     offset=offset, position_nod1=position_nod1, position_nod2=position_nod2)
 
             # Loop through the list of file names for s2d files
@@ -3849,6 +3849,14 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                         _filename_ = _filename_.replace('.fits_', '_combined.fits')
 
+                        DO_NOT_USE = dqflags.pixel['DO_NOT_USE']
+
+                        hdul_s2d[0].header['S_RESAMP'] = 'SKIPPED'
+                        hdul_s2d[0].header['FILENAME'] = _filename_
+
+                        dq_data = np.where(hdul_s2d['WHT'].data == 0, DO_NOT_USE, 0).astype(np.uint32)
+                        hdul_s2d.insert(hdul_s2d.index_of('WAVELENGTH'), fits.ImageHDU(data=dq_data, name='DQ'))
+
                         hdul_s2d.writeto(f'{directories['Spec2']}/{_filename_}', overwrite=True)
 
                     # Inspect the background subtracted s2d files
@@ -3857,7 +3865,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     bkg_dict = {'box_size':(3, 3), 'filter_size':(3, 3), 'sigma':sigma}
 
-                    inspect_spectra(directories['Spec2'], [_filename_], None, ellipses=True, 
+                    inspect_spectra(directories['Spec2'], [_filename_], None, ellipses=True, zred=zred, 
                         bkg_dict=bkg_dict, offset=offset, position_nod1=position_nod1, position_nod2=position_nod2)
 
             # Inspect sums along the columns and rows
@@ -4020,8 +4028,8 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             filenames_s2d = [filename_s2d for filename_s2d in filenames_s2d if 'outlier' not in filename_s2d]
 
-            inspect_spectra(temp_pathname, filenames_s2d, filenames_c1d, colorbar='SNR') # Options include 'SB' and 'SNR'
-            inspect_spectra(temp_pathname, filenames_s2d, filenames_x1d, colorbar='SNR') # Options include 'SB' and 'SNR'
+            inspect_spectra(temp_pathname, filenames_s2d, filenames_c1d, zred=zred, colorbar='SNR') # Options include 'SB' and 'SNR'
+            inspect_spectra(temp_pathname, filenames_s2d, filenames_x1d, zred=zred, colorbar='SNR') # Options include 'SB' and 'SNR'
 
         # Create figure to compare fluxes and errors for the different reductions of the 1D spectra
 
@@ -4317,7 +4325,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
 
         except:
 
-            EXTRXSTR, EXTRXSTP = 0, 64
+            EXTRXSTR, EXTRXSTP = 0, 60
 
     # Compute extraction boundaries and LSF-smoothed spectrum when PSF arrays are available
 
