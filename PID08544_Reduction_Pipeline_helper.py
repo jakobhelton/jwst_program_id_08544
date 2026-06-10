@@ -176,50 +176,66 @@ the coordinate shifts, masks, and directory paths for your own program.
     if run_Stage1:
 
         helper.run_pipeline_full(directories_Obs1, stage1=True, stage2=False, stage3=False, tweak=run_Tweak, sigma=sigma,
-            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=-1.0)
+            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+        )
 
         helper.run_pipeline_full(directories_Obs2, stage1=True, stage2=False, stage3=False, tweak=run_Tweak, sigma=sigma,
-            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=+1.0)
+            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=+1.0, zred=14.1796, 
+        )
 
         helper.run_pipeline_full(directories_Obs3, stage1=True, stage2=False, stage3=False, tweak=run_Tweak, sigma=sigma,
-            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=+3.0)
+            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=+3.0, zred=14.1796, 
+        )
 
         helper.run_pipeline_full(directories_Obs4, stage1=True, stage2=False, stage3=False, tweak=run_Tweak, sigma=sigma,
-            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=-1.0)
+            bkg_subtract_list=bkg_subtract_list, mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+        )
         
     for bkg_subtract in bkg_subtract_list:
 
         if run_Stage2:
 
             helper.run_pipeline_full(directories_Obs1, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0)
+                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs2, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+1.0)
+                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+1.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs3, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+3.0)
+                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+3.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs4, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0)
+                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+            )
 
         if run_Stage3:
 
             helper.run_pipeline_full(directories_Obs1, stage1=False, stage2=False, stage3=True, tweak=run_Tweak, sigma=sigma,
                 bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[], 
-                mask_trace_width=mask_trace_width, offset=-1.0)
+                mask_trace_width=mask_trace_width, 
+                offset=-1.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs2, stage1=False, stage2=False, stage3=True, tweak=run_Tweak, sigma=sigma,
                 extraction_type=extraction_type, bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[
-                directories_Obs3, directories_Obs4], mask_trace_width=mask_trace_width, offset=+1.0)
+                directories_Obs3, directories_Obs4], mask_trace_width=mask_trace_width, 
+                offset=+1.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs3, stage1=False, stage2=False, stage3=True, tweak=run_Tweak, sigma=sigma,
                 extraction_type=extraction_type, bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[
-                directories_Obs4, directories_Obs2], mask_trace_width=mask_trace_width, offset=+3.0)
+                directories_Obs4, directories_Obs2], mask_trace_width=mask_trace_width, 
+                offset=+3.0, zred=14.1796, 
+            )
 
             helper.run_pipeline_full(directories_Obs4, stage1=False, stage2=False, stage3=True, tweak=run_Tweak, sigma=sigma,
                 extraction_type=extraction_type, bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[
-                directories_Obs2, directories_Obs3], mask_trace_width=mask_trace_width, offset=-1.0)
+                directories_Obs2, directories_Obs3], mask_trace_width=mask_trace_width, 
+                offset=-1.0, zred=14.1796, 
+            )
 """
 
 ###
@@ -2650,7 +2666,7 @@ def tapered_column_extraction(extraction_width=3.0):
 
 ###
 
-def plot_slit_overlay(directories):
+def plot_slit_overlay(directories, zred=14.1796):
 
     """
     Plots the slit overlays from each of the visits on an RGB cutout surrounding the target galaxy.
@@ -2659,11 +2675,9 @@ def plot_slit_overlay(directories):
     -----------
     directories : dict
         List of dictionaries of directories
+    zred : float
+        Redshift used for calculating physical sizes from angular separations
     """
-
-    # Defines relevant plotting hyperparameters
-
-    pixel_scale = 0.030; radius = 0.175/pixel_scale
 
     # Reads in thumbnails to overlay slit on an RGB image around the target galaxy
 
@@ -2707,6 +2721,20 @@ def plot_slit_overlay(directories):
     image_min = np.amin([np.amin(image_R), np.amin(image_G), np.amin(image_B)])
 
     extreme = +1.25 # 1.0*np.amax([image_max, np.absolute(image_min)]) # nJy per pixel
+
+    # Defines relevant plotting hyperparameters, i.e., pixel scale in arcsec/pixel and radius
+
+    if True:
+
+        pixel_scale = astropy.wcs.utils.proj_plane_pixel_scales(F444W_wcs)[0]*3600.0 # arcsec/pixel
+
+    else:
+
+        pixel_scale = np.sqrt(np.square(F444W_wcs.wcs.cd[0, 0]) + np.square(F444W_wcs.wcs.cd[1, 0]))*3600.0 \
+            if hasattr(F444W_wcs.wcs, 'cd') and F444W_wcs.wcs.cd is not None \
+            else abs(F444W_wcs.wcs.cdelt[0])*3600.0 # arcsec/pixel
+
+    radius = 0.175/pixel_scale
 
     # Determines locations for the edges of the slits using the header information from the s2d files
 
@@ -2763,142 +2791,154 @@ def plot_slit_overlay(directories):
                 [target_RA_Nod1, target_DEC_Nod1], [target_RA_Nod2, target_DEC_Nod2], 
             ])
 
-        # Plots the slit on an RGB image around the target galaxy using the previously read in thumbnails
+    # Plots the slit on an RGB image around the target galaxy using the previously read in thumbnails
 
-        plt.close()
-        fig = plt.figure(figsize=(6, 6))
-        ax = fig.add_subplot(111)
+    plt.close()
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111)
 
-        xs = np.max([image_R.shape[0], image_G.shape[0], image_B.shape[0]])
-        ys = np.max([image_R.shape[1], image_G.shape[1], image_B.shape[1]])
+    xs = np.max([image_R.shape[0], image_G.shape[0], image_B.shape[0]])
+    ys = np.max([image_R.shape[1], image_G.shape[1], image_B.shape[1]])
 
-        img = np.zeros((xs, ys, 3))
+    img = np.zeros((xs, ys, 3))
 
-        img[:, :, 0] = image_R
-        img[:, :, 1] = image_G
-        img[:, :, 2] = image_B
+    img[:, :, 0] = image_R
+    img[:, :, 1] = image_G
+    img[:, :, 2] = image_B
 
-        if False:
+    if False:
 
-            img[:, :, 0] = scipy.ndimage.gaussian_filter(image_R, sigma=0.269/2.0/pixel_scale, truncate=5.0)
-            img[:, :, 1] = scipy.ndimage.gaussian_filter(image_G, sigma=0.269/2.0/pixel_scale, truncate=5.0)
-            img[:, :, 2] = scipy.ndimage.gaussian_filter(image_B, sigma=0.269/2.0/pixel_scale, truncate=5.0)
+        img[:, :, 0] = scipy.ndimage.gaussian_filter(image_R, sigma=0.269/2.0/pixel_scale, truncate=5.0)
+        img[:, :, 1] = scipy.ndimage.gaussian_filter(image_G, sigma=0.269/2.0/pixel_scale, truncate=5.0)
+        img[:, :, 2] = scipy.ndimage.gaussian_filter(image_B, sigma=0.269/2.0/pixel_scale, truncate=5.0)
 
-        img_max = np.amax(img)
+    img_max = np.amax(img)
 
-        img_min = 1e+6*np.amin(img[img > 0.0])
+    img_min = 1e+6*np.amin(img[img > 0.0])
 
-        clipped_R = np.clip(image_R, img_min, img_max)
-        clipped_G = np.clip(image_G, img_min, img_max)
-        clipped_B = np.clip(image_B, img_min, img_max)
+    clipped_R = np.clip(image_R, img_min, img_max)
+    clipped_G = np.clip(image_G, img_min, img_max)
+    clipped_B = np.clip(image_B, img_min, img_max)
 
-        img[:, :, 0] = 1.00*(clipped_R - img_min)/(img_max - img_min)
-        img[:, :, 1] = 1.25*(clipped_G - img_min)/(img_max - img_min)
-        img[:, :, 2] = 1.25*(clipped_B - img_min)/(img_max - img_min)
+    img[:, :, 0] = 1.00*(clipped_R - img_min)/(img_max - img_min)
+    img[:, :, 1] = 1.25*(clipped_G - img_min)/(img_max - img_min)
+    img[:, :, 2] = 1.25*(clipped_B - img_min)/(img_max - img_min)
 
-        if True:
+    if True:
 
-            log_clipped_R = np.log10(clipped_R)
-            log_clipped_G = np.log10(clipped_G)
-            log_clipped_B = np.log10(clipped_B)
+        log_clipped_R = np.log10(clipped_R)
+        log_clipped_G = np.log10(clipped_G)
+        log_clipped_B = np.log10(clipped_B)
 
-            img_max = np.amax([log_clipped_R, log_clipped_G, log_clipped_B])
-            img_min = np.amin([log_clipped_R, log_clipped_G, log_clipped_B])
+        img_max = np.amax([log_clipped_R, log_clipped_G, log_clipped_B])
+        img_min = np.amin([log_clipped_R, log_clipped_G, log_clipped_B])
 
-            img[:, :, 0] = 1.00*(log_clipped_R - img_min)/(img_max - img_min)
-            img[:, :, 1] = 1.25*(log_clipped_G - img_min)/(img_max - img_min)
-            img[:, :, 2] = 1.25*(log_clipped_B - img_min)/(img_max - img_min)
+        img[:, :, 0] = 1.00*(log_clipped_R - img_min)/(img_max - img_min)
+        img[:, :, 1] = 1.25*(log_clipped_G - img_min)/(img_max - img_min)
+        img[:, :, 2] = 1.25*(log_clipped_B - img_min)/(img_max - img_min)
 
-        img[img > 1.0] = 1.0; img[np.isnan(img)] = 0.0
+    img[img > 1.0] = 1.0; img[np.isnan(img)] = 0.0
 
-        if False:norm = ImageNormalize(img, interval=ZScaleInterval(), stretch=LogStretch())
-        else: norm = ImageNormalize(img, interval=ZScaleInterval(), stretch=LinearStretch())
+    if False:norm = ImageNormalize(img, interval=ZScaleInterval(), stretch=LogStretch())
+    else: norm = ImageNormalize(img, interval=ZScaleInterval(), stretch=LinearStretch())
 
-        ax.imshow(img, origin='lower', aspect='equal', norm=norm)
+    ax.imshow(img, origin='lower', aspect='equal', norm=norm)
 
-        xmin, xmax = ax.get_xlim(); xcen = (xmax - xmin)/2.0
-        ymin, ymax = ax.get_ylim(); ycen = (ymax - ymin)/2.0
+    xmin, xmax = ax.get_xlim(); xcen = (xmax - xmin)/2.0
+    ymin, ymax = ax.get_ylim(); ycen = (ymax - ymin)/2.0
 
-        temp_factor = 8.0
-        temp_xmin, temp_xmax = xcen - (xmax - xmin)/temp_factor, xcen + (xmax - xmin)/temp_factor
-        temp_ymin, temp_ymax = ycen - (ymax - ymin)/temp_factor, ycen + (ymax - ymin)/temp_factor
-        ax.set_xlim(temp_xmin, temp_xmax)
-        ax.set_ylim(temp_ymin, temp_ymax)
+    temp_factor = 8.0
+    temp_xmin, temp_xmax = xcen - (xmax - xmin)/temp_factor, xcen + (xmax - xmin)/temp_factor
+    temp_ymin, temp_ymax = ycen - (ymax - ymin)/temp_factor, ycen + (ymax - ymin)/temp_factor
+    ax.set_xlim(temp_xmin, temp_xmax)
+    ax.set_ylim(temp_ymin, temp_ymax)
 
-        if True:
+    if True:
 
-            temp_colors = sns.color_palette('husl', 2*len(Coordinates))
+        temp_colors = sns.color_palette('husl', 2*len(Coordinates))
 
-            for i, Coordinate in enumerate(Coordinates):
+        for i, Coordinate in enumerate(Coordinates):
 
-                ObsNumber = Coordinate[0][0]
+            ObsNumber = Coordinate[0][0]
 
-                coords_slit_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[1][0], Coordinate[1][1], frame=ICRS, unit='deg'))
-                coords_slit_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[2][0], Coordinate[2][1], frame=ICRS, unit='deg'))
+            coords_slit_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[1][0], Coordinate[1][1], frame=ICRS, unit='deg'))
+            coords_slit_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[2][0], Coordinate[2][1], frame=ICRS, unit='deg'))
 
-                coords_target_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[3][0], Coordinate[3][1], frame=ICRS, unit='deg'))
-                coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
+            coords_target_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[3][0], Coordinate[3][1], frame=ICRS, unit='deg'))
+            coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
 
-                ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
-                    color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod1}}$', zorder=i)
-                ax.plot(coords_slit_Nod2[0].tolist(), coords_slit_Nod2[1].tolist(), 
-                    color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod2}}$', zorder=i)
+            ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
+                color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod1}}$', zorder=i)
+            ax.plot(coords_slit_Nod2[0].tolist(), coords_slit_Nod2[1].tolist(), 
+                color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod2}}$', zorder=i)
 
-                ax.plot(coords_target_Nod1[0].tolist(), coords_target_Nod1[1].tolist(), 
-                    color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
-                ax.plot(coords_target_Nod2[0].tolist(), coords_target_Nod2[1].tolist(), 
-                    color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
+            ax.plot(coords_target_Nod1[0].tolist(), coords_target_Nod1[1].tolist(), 
+                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
+            ax.plot(coords_target_Nod2[0].tolist(), coords_target_Nod2[1].tolist(), 
+                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
 
-        fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
+    # fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
+    fig.suptitle(r'$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
 
-        ax.set_xlabel(''); ax.set_ylabel('')
-        ax.set_xticks([]); ax.set_yticks([])
+    ax.set_xlabel(''); ax.set_ylabel('')
+    ax.set_xticks([]); ax.set_yticks([])
 
-        width = 1.0
+    width = 1.0
 
-        if True:
+    if True:
 
-            ax.arrow(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=0.0, dy=+20.0, 
-                width=width, head_width=3.0*width, head_length=3.0*width, color='w')
-            ax.arrow(0.948*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-20.0, dy=0.0, 
-                width=width, head_width=3.0*width, head_length=3.0*width, color='w')
+        ax.arrow(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=0.0, dy=+20.0, 
+            width=width, head_width=3.0*width, head_length=3.0*width, color='w')
+        ax.arrow(0.948*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-20.0, dy=0.0, 
+            width=width, head_width=3.0*width, head_length=3.0*width, color='w')
 
-            ax.text(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.225*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{N}$', 
+        ax.text(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.225*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{N}$', 
+            fontsize=16, color='w', ha='center', va='center')
+        ax.text(0.775*(temp_xmax - temp_xmin) + temp_xmin, 0.0475*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{E}$', 
+            fontsize=16, color='w', ha='center', va='center')
+
+    if False: # Whether or not to plot a scalebar in the lower left of the image
+
+        scalebar_arcsec = 0.6; scalebar_half_pix = scalebar_arcsec/pixel_scale/2.0
+
+        ax.errorbar(0.20*(xmax - xmin) + xmin, 0.057*(ymax - ymin) + ymin, xerr=scalebar_half_pix, yerr=0,
+            marker='none', markerfacecolor='none', markeredgecolor='none', 
+            color='w', lw=3, capsize=6.0, capthick=3.0)
+
+        ax.text(0.20*(xmax - xmin) + xmin, 0.15*(ymax - ymin) + ymin, 
+            fr'\boldmath${scalebar_arcsec:.1f}^{{\prime\prime}}$', 
+            fontsize=16, color='w', ha='center', va='center')
+
+        if zred is not None:
+
+            physical_size_kpc = (scalebar_arcsec*u.arcsec/cosmo.arcsec_per_kpc_proper(zred)).to(u.kpc).value
+
+            ax.text(0.20*(xmax - xmin) + xmin, 0.10*(ymax - ymin) + ymin, 
+                fr'\boldmath${physical_size_kpc:.1f}\ \mathrm{{pkpc}}$', 
                 fontsize=16, color='w', ha='center', va='center')
-            ax.text(0.775*(temp_xmax - temp_xmin) + temp_xmin, 0.0475*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{E}$', 
-                fontsize=16, color='w', ha='center', va='center')
 
-        if False: # Whether or not to plot a scalebar in the lower left of the image
+    handles, labels = ax.get_legend_handles_labels()
+    N = len(handles); ordering = list(range(0, N, 2)) + list(range(1, N, 2))
+    handles, labels = [handles[i] for i in ordering], [labels[i] for i in ordering]
+    legend = ax.legend(handles, labels, loc='upper center', ncol=2, fontsize=16, framealpha=1)
+    legend.get_frame().set_edgecolor('darkgrey')
+    legend.get_frame().set_linewidth(3)
 
-            ax.errorbar(0.20*(xmax - xmin) + xmin, 0.057*(ymax - ymin) + ymin, xerr=+10.0, yerr=0,
-                marker='none', markerfacecolor='none', markeredgecolor='none', 
-                color='w', lw=3, capsize=6.0, capthick=3.0)
+    # ax.legend().set_visible(True)
 
-            ax.text(0.20*(xmax - xmin) + xmin, 0.15*(ymax - ymin) + ymin, r'\boldmath$0.6^{\prime\prime}$', 
-                fontsize=16, color='w', ha='center', va='center')
-            ax.text(0.20*(xmax - xmin) + xmin, 0.10*(ymax - ymin) + ymin, r'\boldmath$1.9\ \mathrm{pkpc}$', 
-                fontsize=16, color='w', ha='center', va='center')
+    for axis in ['top','bottom','left','right']:
 
-        handles, labels = ax.get_legend_handles_labels()
-        legend = ax.legend(handles, labels, loc='upper center', ncol=2, fontsize=16, framealpha=1)
-        legend.get_frame().set_edgecolor('darkgrey')
-        legend.get_frame().set_linewidth(3)
+        ax.spines[axis].set_linewidth(4.5); ax.spines[axis].set_edgecolor('dimgrey')
 
-        # ax.legend().set_visible(True)
+    plt.savefig(f'{directory['Spec2']}/Slit_Locations.pdf', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{directory['Spec2']}/Slit_Locations.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{directory['Spec2']}/Slit_Locations.jpg', dpi=300, bbox_inches='tight')
 
-        for axis in ['top','bottom','left','right']:
+    plt.savefig(f'{temp_temp_pathname}/Slit_Locations.pdf', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{temp_temp_pathname}/Slit_Locations.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{temp_temp_pathname}/Slit_Locations.jpg', dpi=300, bbox_inches='tight')
 
-            ax.spines[axis].set_linewidth(4.5); ax.spines[axis].set_edgecolor('dimgrey')
-
-        plt.savefig(f'{directory['Spec2']}/Slit_Locations.pdf', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{directory['Spec2']}/Slit_Locations.png', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{directory['Spec2']}/Slit_Locations.jpg', dpi=300, bbox_inches='tight')
-
-        plt.savefig(f'{temp_temp_pathname}/Slit_Locations.pdf', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{temp_temp_pathname}/Slit_Locations.png', dpi=300, bbox_inches='tight')
-        plt.savefig(f'{temp_temp_pathname}/Slit_Locations.jpg', dpi=300, bbox_inches='tight')
-
-        plt.show()
+    plt.show()
 
 ###
 
@@ -3688,7 +3728,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             # Inspect the slit placements on the sky
 
-            plot_slit_overlay([directories])
+            plot_slit_overlay([directories], zred=zred)
 
             # Inspect the full images from the cal files
 
