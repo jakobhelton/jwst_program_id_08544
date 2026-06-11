@@ -4568,27 +4568,59 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
 
                 if np.logical_and(xmin < np.mean([wave_O2__3727, wave_O2__3729]), np.mean([wave_O2__3727, wave_O2__3729]) < xmax):
 
-                    ax.text(np.mean([wave_O2__3727, wave_O2__3729])+0.01*xspan, 0.950*ymax_1d,
-                        r'\boldmath$\leftarrow [\mathrm{OII}] \lambda\lambda 3727{,\:\!}3729$',
-                        c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
+                    temp_text_O2__3727 = r'\boldmath$\leftarrow [\mathrm{OII}] \lambda\lambda 3727{,\:\!}3729$'
+
+                    text_O2__3727 = ax.text(np.mean([wave_O2__3727, wave_O2__3729])+0.01*xspan, 0.950*ymax_1d, 
+                        temp_text_O2__3727, c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
 
                 if np.logical_and(xmin < wave_Hb__4863, wave_Hb__4863 < xmax):
 
-                    ax.text(wave_Hb__4863-0.01*xspan, 0.945*ymax_1d,
-                        r'\boldmath$\mathrm{H}\beta \rightarrow$',
-                        c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
+                    temp_text_Hb__4863 = r'\boldmath$\mathrm{H}\beta \rightarrow$'
+
+                    text_Hb__4863 = ax.text(wave_Hb__4863-0.01*xspan, 0.945*ymax_1d, 
+                        temp_text_Hb__4863, c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
 
                 if np.logical_and(xmin < wave_O3__5007, wave_O3__5007 < xmax):
 
-                    ax.text(wave_O3__5007+0.01*xspan, 0.950*ymax_1d,
-                        r'\boldmath$\leftarrow [\mathrm{OIII}] \lambda\lambda 4959{,\:\!}5007$',
+                    temp_text_O3__5007 = r'\boldmath$\leftarrow [\mathrm{OIII}] \lambda\lambda 4959{,\:\!}5007$'
+
+                    text_O3__5007 = ax.text(wave_O3__5007+0.01*xspan, 0.950*ymax_1d, temp_text_O3__5007,
                         c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
 
                 if np.logical_and(xmin < wave_Ha__6565, wave_Ha__6565 < xmax):
 
-                    ax.text(wave_Ha__6565-0.01*xspan, 0.941*ymax_1d,
-                        r'\boldmath$\mathrm{H}\alpha \rightarrow$',
-                        c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
+                    temp_text_Ha__6565 = r'\boldmath$\mathrm{H}\alpha \rightarrow$'
+
+                    text_Ha__6565 = ax.text(wave_Ha__6565-0.01*xspan, 0.941*ymax_1d, 
+                        temp_text_Ha__6565, c=colors_5[3], fontsize=14, ha='right', va='top', zorder=2)
+
+                if text_O2__3727 and text_Hb__4863:
+
+                    fig.canvas.draw()
+
+                    bbox_O2__3727 = text_O2__3727.get_window_extent()
+                    bbox_Hb__4863 = text_Hb__4863.get_window_extent()
+
+                    if bbox_O2__3727.overlaps(bbox_Hb__4863):
+
+                        text_O2__3727.remove()
+
+                        text_O2__3727 = ax.text(np.mean([wave_O2__3727, wave_O2__3729])+0.01*xspan, 0.950*ymax_1d-0.10*(ymax_1d-ymin_1d), 
+                            temp_text_O2__3727, c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
+
+                if text_O3__5007 and text_Ha__6565:
+
+                    fig.canvas.draw()
+
+                    bbox_O3__5007 = text_O3__5007.get_window_extent()
+                    bbox_Ha__6565 = text_Ha__6565.get_window_extent()
+
+                    if bbox_O3__5007.overlaps(bbox_Ha__6565):
+
+                        text_O3__5007.remove()
+
+                        text_O3__5007 = ax.text(wave_O3__5007+0.01*xspan, 0.950*ymax_1d-0.10*(ymax_1d-ymin_1d), temp_text_O3__5007,
+                            c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
 
                 if np.logical_and(xmin < 0.3646*(1.0+zred), 0.3646*(1.0+zred) < xmax):
 
