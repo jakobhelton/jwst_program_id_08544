@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/10 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/11 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -970,6 +970,8 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     # Defines age bins using the given parameters
 
+    agebin0 = np.log10(1.0 + 1.0e+6)
+
     if tbirth.shape != ():
 
         tuniv = tbirth[0]
@@ -984,7 +986,7 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     elif agebin1 is None or np.log10(1.0e+9*tuniv) <= agebin1:
 
-        agelims = [0] + np.linspace(6.0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+        agelims = [0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
     elif agebin2 is None or np.log10(1.0e+9*tuniv) <= agebin2:
 
@@ -1002,7 +1004,11 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     if np.amin(np.diff(np.power(10, np.array([agelims[:-1], agelims[1:]])))) < 1e+6:
 
-        agelims = [0] + np.linspace(6.0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+        agelims = [0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+
+        if np.amin(np.diff(np.power(10, np.array([agelims[:-1], agelims[1:]])))) < 1e+6:
+
+            agelims = [0] + np.log10(np.linspace(1.0+1.0e+6, 1.0+1.0e+6*nbins, nbins-0)).tolist()
 
     agebins = np.array([agelims[:-1], agelims[1:]])
 
