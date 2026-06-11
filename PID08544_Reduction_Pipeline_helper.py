@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/10 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/11 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -1997,8 +1997,13 @@ def inspect_spectra(pathname, filenames_s2d=None, filenames_x1d=None, ellipses=F
                 wavelength_data = data_x1d.field(np.where(np.array(column_names) == 'WAVELENGTH')[0][0])
                 flux_data = data_x1d.field(np.where(np.array(column_names) == 'FLUX')[0][0])
 
-                try: EXTRXSTR, EXTRXSTP = hdul_x1d[1].header['EXTRXSTR'], hdul_x1d[1].header['EXTRXSTP']
-                except Exception: EXTRXSTR, EXTRXSTP = 0, 64
+                try:
+
+                    EXTRXSTR, EXTRXSTP = hdul_x1d[1].header['EXTRXSTR'], hdul_x1d[1].header['EXTRXSTP']
+
+                except Exception: 
+
+                    EXTRXSTR, EXTRXSTP = 0, 60
 
             # Plot the science data...
 
@@ -2868,9 +2873,9 @@ def plot_slit_overlay(directories, zred=14.1796):
             coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
 
             ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
-                color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod1}}$', zorder=i)
+                color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod1}}$', zorder=i)
             ax.plot(coords_slit_Nod2[0].tolist(), coords_slit_Nod2[1].tolist(), 
-                color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{ObsNumber},\,Nod2}}$', zorder=i)
+                color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod2}}$', zorder=i)
 
             ax.plot(coords_target_Nod1[0].tolist(), coords_target_Nod1[1].tolist(), 
                 color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
@@ -2887,25 +2892,27 @@ def plot_slit_overlay(directories, zred=14.1796):
 
     if True:
 
-        ax.arrow(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=0.0, dy=+20.0, 
+        dx, dy = +20.0, +20.0
+
+        ax.arrow(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=0.0, dy=+1.0*dy, 
             width=width, head_width=3.0*width, head_length=3.0*width, color='w')
-        ax.arrow(0.948*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-20.0, dy=0.0, 
+        ax.arrow(0.948*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-1.0*dx, dy=0.0, 
             width=width, head_width=3.0*width, head_length=3.0*width, color='w')
 
-        ax.text(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.225*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{N}$', 
-            fontsize=16, color='w', ha='center', va='center')
-        ax.text(0.775*(temp_xmax - temp_xmin) + temp_xmin, 0.0475*(temp_ymax - temp_ymin) + temp_ymin, r'\boldmath$\mathrm{E}$', 
-            fontsize=16, color='w', ha='center', va='center')
+        ax.text(0.948*(temp_xmax - temp_xmin) + temp_xmin - 1.33*dx, 0.0475*(temp_ymax - temp_ymin) + temp_ymin, 
+            r'\boldmath$\mathrm{E}$', fontsize=16, color='w', ha='center', va='center')
+        ax.text(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin + 1.31*dy, 
+            r'\boldmath$\mathrm{N}$', fontsize=16, color='w', ha='center', va='center')
 
-    if False: # Whether or not to plot a scalebar in the lower left of the image
+    if True: # Whether or not to plot a scalebar in the lower left of the image
 
-        scalebar_arcsec = 0.6; scalebar_half_pix = scalebar_arcsec/pixel_scale/2.0
+        scalebar_arcsec = 1.2; scalebar_half_pix = scalebar_arcsec/pixel_scale/2.0
 
-        ax.errorbar(0.20*(xmax - xmin) + xmin, 0.057*(ymax - ymin) + ymin, xerr=scalebar_half_pix, yerr=0,
+        ax.errorbar(0.20*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, xerr=scalebar_half_pix, yerr=0,
             marker='none', markerfacecolor='none', markeredgecolor='none', 
             color='w', lw=3, capsize=6.0, capthick=3.0)
 
-        ax.text(0.20*(xmax - xmin) + xmin, 0.15*(ymax - ymin) + ymin, 
+        ax.text(0.20*(temp_xmax - temp_xmin) + temp_xmin, 0.15*(temp_ymax - temp_ymin) + temp_ymin, 
             fr'\boldmath${scalebar_arcsec:.1f}^{{\prime\prime}}$', 
             fontsize=16, color='w', ha='center', va='center')
 
@@ -2913,8 +2920,8 @@ def plot_slit_overlay(directories, zred=14.1796):
 
             physical_size_kpc = (scalebar_arcsec*u.arcsec/cosmo.arcsec_per_kpc_proper(zred)).to(u.kpc).value
 
-            ax.text(0.20*(xmax - xmin) + xmin, 0.10*(ymax - ymin) + ymin, 
-                fr'\boldmath${physical_size_kpc:.1f}\ \mathrm{{pkpc}}$', 
+            ax.text(0.20*(temp_xmax - temp_xmin) + temp_xmin, 0.10*(temp_ymax - temp_ymin) + temp_ymin, 
+                fr'\boldmath$\approx {physical_size_kpc:.1f}\ \mathrm{{pkpc}}$', 
                 fontsize=16, color='w', ha='center', va='center')
 
     handles, labels = ax.get_legend_handles_labels()
@@ -3917,7 +3924,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             clean_cal_files(filenames_cal, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
                 columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
 
-            # Subtracts the medians out row-by-row for the cal files
+            # Subtracts the medians out row-by-row for the cal files produced by Stage 2 of the pipeline
 
             subtract_row_medians(filenames_cal, sigma_lower_threshold=sigma-1.0, sigma_upper_threshold=sigma-1.0)
 
@@ -3983,6 +3990,11 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     level3_association_files = [(directories['AssociationFiles'][1][0], 'association.json')]
 
+                # Cleans the cal files produced by Stage 2 of the pipeline with sigma clipping
+
+                clean_cal_files(filenames_cal, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
+                    columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
+
             else:
 
                 temp_pathname = directories['Spec2']
@@ -4032,6 +4044,11 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                 level3_association_files = [create_level3_association(None, filenames, 
                     suffix=suffix) for filenames, suffix in association_inputs]
+
+                # Cleans the cal files produced by Stage 2 of the pipeline with sigma clipping
+
+                clean_cal_files(filenames_cal, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
+                    columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
 
             # Runs Stage 3 of the JWST pipeline, once using the s2d files and another time using the cal files
             # Jake prefers working with the s2d files while Jane prefers working with the cal files
@@ -4363,7 +4380,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
 
             EXTRXSTR, EXTRXSTP = hdul_x1d[1].header['EXTRXSTR'], hdul_x1d[1].header['EXTRXSTP']
 
-        except:
+        except Exception:
 
             EXTRXSTR, EXTRXSTP = 0, 60
 
@@ -4408,6 +4425,16 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
             lsf_flux.append(temp_smoothed.flux.value[idx])
 
         smoothed_flux_data, smoothed_flux_error_data = np.array(lsf_flux), np.array(lsf_flux_err)
+
+    else:
+
+        default_reference = crds.config.locate_file('jwst_miri_extract1d_0007.json', observatory='jwst')
+
+        with open(default_reference) as default_reference_file: default_reference_json = json.load(default_reference_file)
+
+        xstart, xstop = default_reference_json['apertures'][0]['xstart'], default_reference_json['apertures'][0]['xstop']
+
+        upper_extraction, lower_extraction = xstop*np.ones(temp_xarray.shape), (xstart-1.0)*np.ones(temp_xarray.shape)
 
     # Axis ticks and figure layout
 
@@ -4460,10 +4487,10 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
                 temp_image = ax.pcolormesh(xx, yy, data[:, index_xmin:index_xmax], vmin=vmin_zscale, vmax=vmax_zscale,
                     cmap=cmap, shading='face', edgecolors='face', lw=0, rasterized=True)
 
-                ymin_2d, ymax_2d = ax.get_ylim()
+                ymin_2d, ymax_2d = EXTRXSTR, EXTRXSTP # ax.get_ylim()
 
-                ax.vlines(vlines, ymax_2d-10+1, ymax_2d+1, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
-                ax.vlines(vlines, ymin_2d+1, ymin_2d+10+1, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+                ax.vlines(vlines, ymax_2d-10+1, ymax_2d, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
+                ax.vlines(vlines, ymin_2d, ymin_2d+10+0, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
 
                 if upper_extraction is not None and lower_extraction is not None:
 
@@ -4472,6 +4499,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
 
                 ax.set_xlim(xmin, xmax)
                 ax.set_ylim(0.0, data.shape[0])
+                ax.set_ylim(EXTRXSTR, EXTRXSTP)
                 ax.set_xticks(xticks); ax.set_xticklabels([])
                 ax.xaxis.set_minor_locator(MultipleLocator(xstep))
                 ax.yaxis.set_minor_locator(AutoMinorLocator(4))
@@ -4541,7 +4569,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
                 if np.logical_and(xmin < np.mean([wave_O2__3727, wave_O2__3729]), np.mean([wave_O2__3727, wave_O2__3729]) < xmax):
 
                     ax.text(np.mean([wave_O2__3727, wave_O2__3729])+0.01*xspan, 0.950*ymax_1d,
-                        r'\boldmath$\leftarrow [\mathrm{OII}]\ \lambda\lambda 3727{,\:\!}3729$',
+                        r'\boldmath$\leftarrow [\mathrm{OII}] \lambda\lambda 3727{,\:\!}3729$',
                         c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
 
                 if np.logical_and(xmin < wave_Hb__4863, wave_Hb__4863 < xmax):
@@ -4553,7 +4581,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
                 if np.logical_and(xmin < wave_O3__5007, wave_O3__5007 < xmax):
 
                     ax.text(wave_O3__5007+0.01*xspan, 0.950*ymax_1d,
-                        r'\boldmath$\leftarrow [\mathrm{OIII}]\ \lambda\lambda 4959{,\:\!}5007$',
+                        r'\boldmath$\leftarrow [\mathrm{OIII}] \lambda\lambda 4959{,\:\!}5007$',
                         c=colors_5[3], fontsize=14, ha='left', va='top', zorder=2)
 
                 if np.logical_and(xmin < wave_Ha__6565, wave_Ha__6565 < xmax):
