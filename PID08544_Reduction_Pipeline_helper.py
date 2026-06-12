@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/11 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/12 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -3846,13 +3846,16 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     # Calculates weighted average from the three visits
 
-                    array_var_poisson_data = 1.0/np.sum(1.0/array_var_poisson_data, axis=0)
-                    array_var_rnoise_data = 1.0/np.sum(1.0/array_var_rnoise_data, axis=0)
-                    array_var_flat_data = 1.0/np.sum(1.0/array_var_flat_data, axis=0)
+                    array_var_poisson_data = 1.0/np.nansum(1.0/array_var_poisson_data, axis=0)
+                    array_var_rnoise_data = 1.0/np.nansum(1.0/array_var_rnoise_data, axis=0)
+                    array_var_flat_data = 1.0/np.nansum(1.0/array_var_flat_data, axis=0)
 
-                    err_data = np.sqrt(np.sum(np.square(array_err_data), axis=0))/array_err_data.shape[0]
+                    n_valid_pixels = np.sum(np.isfinite(array_err_data), axis=0)
+                    n_valid_condition = np.where(n_valid_pixels > 0, n_valid_pixels, np.nan)
+                    err_data = np.sqrt(np.nansum(np.square(array_err_data), axis=0))/n_valid_condition
                     err_data[np.isnan(err_data)] = np.inf; err_data[~np.isfinite(err_data)] = np.inf
-                    sci_data = astropy.stats.biweight_location(array_sci_data, axis=0)
+
+                    sci_data = astropy.stats.biweight_location(array_sci_data, axis=0, ignore_nan=True)
 
                     trace_mask = np.zeros(sci_data.shape, dtype=bool)
 
@@ -4045,9 +4048,9 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                 level3_association_files = [create_level3_association(None, filenames, 
                     suffix=suffix) for filenames, suffix in association_inputs]
 
-                # Cleans the cal files produced by Stage 2 of the pipeline with sigma clipping
+                # Cleans the bsub files produced by Stage 2 of the pipeline with sigma clipping
 
-                clean_cal_files(filenames_cal, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
+                clean_cal_files(filenames_bsub, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
                     columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
 
             # Runs Stage 3 of the JWST pipeline, once using the s2d files and another time using the cal files
