@@ -196,25 +196,29 @@ the coordinate shifts, masks, and directory paths for your own program.
         if run_Stage2:
 
             helper.run_pipeline_full(directories_Obs1, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
+                offset=-1.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs2, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
+                offset=+1.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs3, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=+3.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
+                offset=+3.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs4, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
+                offset=-1.0, zred=14.1796, 
             )
 
         if run_Stage3:
 
             helper.run_pipeline_full(directories_Obs1, stage1=False, stage2=False, stage3=True, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[], 
+                extraction_type=extraction_type, bkg_subtract_list=[bkg_subtract], extra_directories_for_spec3=[], 
                 mask_trace_width=mask_trace_width, 
                 offset=-1.0, zred=14.1796, 
             )
@@ -2213,17 +2217,17 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
     Parameters
     ----------
     filenames : list of str
-        Paths to cal FITS files to modify (the function writes new files, does not overwrite originals).
+        Paths to cal FITS files to modify (the function writes new files, does not overwrite originals)
     sigma_lower_threshold : float
-        The lower threshold to be used for sigma clipping the available exposures.
+        The lower threshold to be used for sigma clipping the available exposures
     sigma_upper_threshold : float
-        The upper threshold to be used for sigma clipping the available exposures.
+        The upper threshold to be used for sigma clipping the available exposures
     max_iterations : int
-        The maximum number of iterations to be used for sigma clipping.
+        The maximum number of iterations to be used for sigma clipping
     columns_to_mask : list of int
-        Detector columns to flag as DO_NOT_USE due to contamination.
+        Detector columns to flag as DO_NOT_USE due to contamination
     rows_to_mask : list of int
-        Detector rows to flag as DO_NOT_USE due to contamination.
+        Detector rows to flag as DO_NOT_USE due to contamination
     mask_trace_width : int
         Half-width of the mask around the trace in units of JWST/MIRI pixels (0.11 arcsec/pixel)
     """
@@ -2281,9 +2285,6 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
         filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
 
     position_nod1, position_nod2 = get_nod_positions_from_wcs(filenames_assign_wcs_nod1, filenames_assign_wcs_nod2, verbose=True)
-
-    position_nod1 -= index_x0
-    position_nod2 -= index_x0
 
     position_nod1_low = int(np.round(position_nod1 - mask_trace_width))
     position_nod1_upp = int(np.round(position_nod1 + mask_trace_width))
@@ -2457,11 +2458,11 @@ def subtract_row_medians(filenames, sigma_lower_threshold=2.0, sigma_upper_thres
     filenames : list
         List of file names for subtracting the median row-by-row, ideally cal files
     sigma_lower_threshold : float
-        The lower threshold to be used for sigma clipping the available exposures.
+        The lower threshold to be used for sigma clipping the available exposures
     sigma_upper_threshold : float
-        The upper threshold to be used for sigma clipping the available exposures.
+        The upper threshold to be used for sigma clipping the available exposures
     max_iterations : int
-        The maximum number of iterations to be used for sigma clipping.
+        The maximum number of iterations to be used for sigma clipping
     """
 
     # Opens a data model for each filename and iterates through each of the rows
@@ -2497,6 +2498,83 @@ def subtract_row_medians(filenames, sigma_lower_threshold=2.0, sigma_upper_thres
             new_data_cutout[row_index, :] -= temp_median
 
         datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = new_data_cutout
+
+        datamodel.save(filename)
+
+        datamodel.close()
+
+###
+
+def subtract_background_iterative(filenames, box_sizes=[(9, 3), (3, 9), (3, 3)], filter_sizes=[(3, 3), (3, 3), (3, 3)], 
+    sigma=3.0, mask_trace_width=5):
+
+    """
+    Defines function for iteratively subtracting the background from imaging data 
+    using the photutils Background2D class for a list of files, ideally cal files.
+
+    Parameters:
+    -----------
+    filenames : list
+        List of file names for subtracting the median row-by-row, ideally cal files
+    box_sizes : list of tuples
+        List of box sizes for the 2D median filter along each axis in (ny, nx) order
+    filter_sizes : list of tuples
+        List of window sizes for the 2D median filter to apply to the low-resolution background map
+    sigma : float
+        Number of standard deviations to be used for sigma clipping
+    mask_trace_width : int
+        Half-width of the mask around the trace in units of JWST/MIRI pixels (0.11 arcsec/pixel)
+    """
+
+    assert len(box_sizes) == len(filter_sizes), \
+        f'box_sizes and filter_sizes must have the same length, got {len(box_sizes)} and {len(filter_sizes)}'
+
+    # Defines the trace positions to mask when iteratively subtracting the background
+
+    is_bsub = all('_bsub_combined.fits' in f for f in filenames)
+
+    if is_bsub:
+
+        filenames_assign_wcs_nod1 = filenames[0::2]
+        filenames_assign_wcs_nod2 = filenames[1::2]
+
+    else:
+
+        filenames_assign_wcs_nod1 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[0::2]]
+        filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
+
+    position_nod1, position_nod2 = get_nod_positions_from_wcs(filenames_assign_wcs_nod1, filenames_assign_wcs_nod2, verbose=True)
+
+    position_nod1_low = int(np.round(position_nod1 - mask_trace_width))
+    position_nod1_upp = int(np.round(position_nod1 + mask_trace_width))
+
+    position_nod2_low = int(np.round(position_nod2 - mask_trace_width))
+    position_nod2_upp = int(np.round(position_nod2 + mask_trace_width))
+
+    # Opens a data model for each filename and iteratively subtracts the background
+
+    for i, filename in enumerate(filenames):
+
+        # Calculates median and subtracts it
+
+        datamodel = datamodels.open(filename)
+
+        data_bbox = datamodel.meta.wcs.bounding_box
+
+        x0, x1 = data_bbox[0]; y0, y1 = data_bbox[1]
+
+        data_cutout = datamodel.data.copy()[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))]
+
+        trace_mask = np.zeros(data_cutout.shape, dtype=bool)
+
+        trace_mask[:, max(0, position_nod1_low):min(data_cutout.shape[1], position_nod1_upp+1)] = True
+        trace_mask[:, max(0, position_nod2_low):min(data_cutout.shape[1], position_nod2_upp+1)] = True
+
+        for box_size, filter_size in zip(box_sizes, filter_sizes):
+
+            data_cutout, _ = background_subtract_s2d(data_cutout, mask=trace_mask, box_size=box_size, filter_size=filter_size, sigma=sigma)
+
+        datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = data_cutout
 
         datamodel.save(filename)
 
@@ -3615,7 +3693,8 @@ def run_spec3_pipeline(pathname, association_file, extraction_type='optimal', re
 ###
 
 def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=True, sigma=3.0, extraction_type='optimal',
-    bkg_subtract_list=[True, False], extra_directories_for_spec3=[], mask_trace_width=5, offset=+1.0, zred=14.1796):
+    bkg_subtract_list=[True, False], bkg_subtract_iterative=False, extra_directories_for_spec3=[], 
+    mask_trace_width=5, offset=+1.0, zred=14.1796):
 
     """
     Run the three stages of the pipeline (Detector1, Spec2, and Spec3), starting with the uncal files.
@@ -3638,8 +3717,10 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
         Type of extraction ('box' or 'optimal')
     bkg_subtract_list : list
         List of options for background subtraction
+    bkg_subtract_iterative : bool
+        Whether or not to iteratively subtract background
     extra_directories_for_spec3 : list
-        List of extra directories for Spec3 processing
+        List of extra directories to be used for Spec3 processing
     mask_trace_width : int
         Half-width of the mask around the trace in units of JWST/MIRI pixels (0.11 arcsec/pixel)
     offset : float
@@ -3899,8 +3980,6 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     try:
 
-                        # sci_data, _ = background_subtract_s2d(sci_data, box_size=(43, 3), filter_size=(3, 3), sigma=sigma, mask=trace_mask)
-
                         sci_data, _ = background_subtract_s2d(sci_data, box_size=(9, 3), filter_size=(3, 3), sigma=sigma, mask=trace_mask)
                         sci_data, _ = background_subtract_s2d(sci_data, box_size=(3, 9), filter_size=(3, 3), sigma=sigma, mask=trace_mask)
                         sci_data, _ = background_subtract_s2d(sci_data, box_size=(3, 3), filter_size=(3, 3), sigma=sigma, mask=trace_mask)
@@ -3961,6 +4040,13 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             # Subtracts the medians out row-by-row for the cal files produced by Stage 2 of the pipeline
 
             subtract_row_medians(filenames_cal, sigma_lower_threshold=sigma-1.0, sigma_upper_threshold=sigma-1.0)
+
+            # Iteratively subtracts background for the cal files produced by Stage 2 of the pipeline using the photutils Background2D class
+
+            if bkg_subtract_iterative:
+
+                subtract_background_iterative(filenames_cal, box_sizes=[(9, 3), (3, 9), (3, 3)], filter_sizes=[(3, 3), (3, 3), (3, 3)], 
+                    sigma=sigma, mask_trace_width=mask_trace_width)
 
     # Runs Stage 3 of the JWST pipeline, with or without background subtraction
 
