@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/12 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/15 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -1033,8 +1033,8 @@ def clean_rate_files(pathname, filenames, sigma_lower_threshold=3.0, sigma_upper
 
             position_nod = get_nod_positions_from_wcs([filename_assign_wcs], None, verbose=True)
 
-            position_nod_low = int(np.round(position_nod - mask_trace_width))
-            position_nod_upp = int(np.round(position_nod + mask_trace_width))
+            position_nod_low = int(np.round(position_nod - mask_trace_width - x0))
+            position_nod_upp = int(np.round(position_nod + mask_trace_width - x0))
 
             datamodel = datamodels.open(filename_rateints)
 
@@ -2241,28 +2241,49 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         return
 
+    is_bsub = all('_bsub_combined.fits' in f for f in filenames)
+
     try:
 
-        with datamodels.open(filenames[0]) as temp_datamodel: bbox = temp_datamodel.meta.wcs.bounding_box
+        with datamodels.open(filenames[0]) as temp_datamodel: 
+
+            bbox = temp_datamodel.meta.wcs.bounding_box
+            nrows, ncols = temp_datamodel.data.shape
 
         x0, x1 = bbox[0] # cross-dispersion (column) direction
         y0, y1 = bbox[1] # dispersion (row) direction
 
-        xsize, ysize = int(np.round(x1 - x0)), int(np.round(y1 - y0))
+        # Clamp slice bounds to actual array dimensions to handle half-integer bbox edges
+
+        index_x0 = max(0, int(np.round(x0))); index_x1 = min(int(ncols), int(np.round(x1))+1)
+        index_y0 = max(0, int(np.round(y0))); index_y1 = min(int(nrows), int(np.round(y1))+1)
+
+        # xsize, ysize = int(np.round(x1 - x0)), int(np.round(y1 - y0))
+        xsize, ysize = index_x1 - index_x0, index_y1 - index_y0
 
     except Exception:
 
-        x0, x1 = +303, +347 # cross-dispersion (column) direction
-        y0, y1 =   +7, +394 # dispersion (row) direction
+        index_x0, index_x1 = +303, +347 # cross-dispersion (column) direction
+        index_y0, index_y1 =   +7, +394 # dispersion (row) direction
 
-        xsize, ysize = int(np.round(x1 - x0)), int(np.round(y1 - y0))
+        xsize, ysize = index_x1 - index_x0, index_y1 - index_y0
 
     cutouts_data = np.zeros((ysize, xsize, len(filenames)))
 
-    filenames_assign_wcs_nod1 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[0::2]]
-    filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
+    if is_bsub:
+
+        filenames_assign_wcs_nod1 = filenames[0::2]
+        filenames_assign_wcs_nod2 = filenames[1::2]
+
+    else:
+
+        filenames_assign_wcs_nod1 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[0::2]]
+        filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
 
     position_nod1, position_nod2 = get_nod_positions_from_wcs(filenames_assign_wcs_nod1, filenames_assign_wcs_nod2, verbose=True)
+
+    position_nod1 -= index_x0
+    position_nod2 -= index_x0
 
     position_nod1_low = int(np.round(position_nod1 - mask_trace_width))
     position_nod1_upp = int(np.round(position_nod1 + mask_trace_width))
@@ -2274,10 +2295,14 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         datamodel = datamodels.open(filename)
 
+        if datamodel.dq is None: 
+
+            datamodel.dq = np.zeros(datamodel.data.shape, dtype=np.uint32)
+    
         temp_dq, temp_data = datamodel.dq.copy(), datamodel.data.copy()
 
-        temp_cutout = temp_data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
-        temp_cutout_dq = temp_dq[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
+        temp_cutout = temp_data[index_y0:index_y1, index_x0:index_x1].copy()
+        temp_cutout_dq = temp_dq[index_y0:index_y1, index_x0:index_x1].copy()
         bad_pixel_mask = np.where(np.bitwise_and(temp_cutout_dq, DO_NOT_USE).astype(bool))
         temp_cutout[bad_pixel_mask] = np.nan
         cutouts_data[:, :, i] = temp_cutout
@@ -2292,9 +2317,9 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         for column in columns_to_mask:
 
-            if column >= x0: 
+            if column >= index_x0: 
 
-                column -= int(np.round(x0))
+                column -= index_x0
 
             if 0 <= column < xsize:
 
@@ -2310,9 +2335,9 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         for row in rows_to_mask:
 
-            if row >= y0: 
+            if row >= index_y0: 
 
-                row -= int(np.round(y0))
+                row -= index_y0
 
             if 0 <= row < ysize:
 
@@ -2355,14 +2380,17 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
             datamodel = datamodels.open(filename)
 
-            temp_dq = datamodel.dq[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
-            temp_data = datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
+            if datamodel.dq is None: 
+
+                datamodel.dq = np.zeros(datamodel.data.shape, dtype=np.uint32)
+
+            temp_dq = datamodel.dq[index_y0:index_y1, index_x0:index_x1].copy()
+            temp_data = datamodel.data[index_y0:index_y1, index_x0:index_x1].copy()
 
             temp_dq[np.where(new_bad_pixels[:, :, i])] |= DO_NOT_USE; temp_data[np.where(new_bad_pixels[:, :, i])] = np.nan
 
-            datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = temp_data
-
-            datamodel.dq[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = temp_dq
+            datamodel.data[index_y0:index_y1, index_x0:index_x1] = temp_data
+            datamodel.dq[index_y0:index_y1, index_x0:index_x1] = temp_dq
 
             datamodel.save(filename)
 
@@ -2396,14 +2424,17 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         datamodel = datamodels.open(filename)
 
-        temp_dq = datamodel.dq[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
-        temp_data = datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))].copy()
+        if datamodel.dq is None: 
+
+            datamodel.dq = np.zeros(datamodel.data.shape, dtype=np.uint32)
+
+        temp_dq = datamodel.dq[index_y0:index_y1, index_x0:index_x1].copy()
+        temp_data = datamodel.data[index_y0:index_y1, index_x0:index_x1].copy()
 
         temp_dq[np.where(new_bad_pixels[:, :, i])] |= DO_NOT_USE; temp_data[np.where(new_bad_pixels[:, :, i])] = np.nan
 
-        datamodel.data[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = temp_data
-
-        datamodel.dq[int(np.round(y0)):int(np.round(y1)), int(np.round(x0)):int(np.round(x1))] = temp_dq
+        datamodel.data[index_y0:index_y1, index_x0:index_x1] = temp_data
+        datamodel.dq[index_y0:index_y1, index_x0:index_x1] = temp_dq
 
         datamodel.save(filename)
 
