@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/11 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/17 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -42,7 +42,7 @@ history type, and redshift for your own target.
 
     filename_phot = 'catalogs/catalog_183348.csv' # Defines the photometric catalog
 
-    observations = helper.build_observations(filename_spec, filename_phot, index=0, maximumSNR=20.0)
+    observations = helper.build_observations(filename_spec, filename_phot, index_phot=0, maximumSNR=20.0)
 
     # Builds the Prospector model for the target galaxy assuming a non-parametric rising star formation history
 
@@ -970,7 +970,7 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     # Defines age bins using the given parameters
 
-    agebin0 = np.log10(1.0 + 1.0e+6)
+    agebin0 = np.log10(1.5e+6)
 
     if tbirth.shape != ():
 
@@ -986,29 +986,29 @@ def transform_zred_to_agebins(zred, tbirth, nbins=6, agebin1=np.log10(3e+6), age
 
     elif agebin1 is None or np.log10(1.0e+9*tuniv) <= agebin1:
 
-        agelims = [0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+        agelims = [0.0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
     elif agebin2 is None or np.log10(1.0e+9*tuniv) <= agebin2:
 
-        agelims = [0] + np.linspace(agebin1, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+        agelims = [0.0] + np.linspace(agebin1, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
     elif agebin3 is None or np.log10(1.0e+9*tuniv) <= agebin3:
 
-        agelims = [0, agebin1] + np.linspace(agebin2, np.log10(1.0e+9*tuniv), nbins-1).tolist()
+        agelims = [0.0, agebin1] + np.linspace(agebin2, np.log10(1.0e+9*tuniv), nbins-1).tolist()
 
     else:
 
-        agelims = [0, agebin1, agebin2] + np.linspace(agebin3, np.log10(1.0e+9*tuniv), nbins-2).tolist()
+        agelims = [0.0, agebin1, agebin2] + np.linspace(agebin3, np.log10(1.0e+9*tuniv), nbins-2).tolist()
 
     # Ensures that the minimum spacing between adjacent age bins is larger than 1 Myr
 
     if np.amin(np.diff(np.power(10, np.array([agelims[:-1], agelims[1:]])))) < 1e+6:
 
-        agelims = [0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
+        agelims = [0.0] + np.linspace(agebin0, np.log10(1.0e+9*tuniv), nbins-0).tolist()
 
         if np.amin(np.diff(np.power(10, np.array([agelims[:-1], agelims[1:]])))) < 1e+6:
 
-            agelims = [0] + np.log10(np.linspace(1.0+1.0e+6, 1.0+1.0e+6*nbins, nbins-0)).tolist()
+            agelims = [0.0] + np.log10(np.linspace(np.power(10, agebin0), np.power(10, agebin0)*nbins, nbins-0)).tolist()
 
     agebins = np.array([agelims[:-1], agelims[1:]])
 
@@ -1798,7 +1798,7 @@ def predict_Prospector(model, theta, observations, stellarPopulationSynthesis):
     model._smooth_spec = model.add_dla(model._wave, model._smooth_spec)
     model._smooth_spec = model.add_damping_wing(model._wave, model._smooth_spec)
 
-    predictions = [model.predict_obs(observation) for observation in observations[::-1]]
+    predictions = [model.predict_obs(observation) for observation in observations]
 
     return predictions, model._mfrac
 
@@ -1976,7 +1976,34 @@ def extract_model_predictions(model, result, observations, stellarPopulationSynt
 
             theta = theta[new_indices]
 
-        predictions, mfrac = predict_Prospector(model, theta, observations, stellarPopulationSynthesis)
+        try:
+
+            predictions, mfrac = predict_Prospector(model, theta, observations, stellarPopulationSynthesis)
+
+        except ValueError:
+
+            # Accounts for the agebin spacing < 1 Myr in this sample (can occur when zred is free);
+            # skip this sample rather than crash the full results build
+
+            import traceback
+
+            print(f'\n--- ValueError at sample {i} ---')
+
+            traceback.print_exc()
+
+            print(f"  zred={theta[list(model.theta_labels()).index('zred')]:.8f}, "
+                  f"tbirth={theta[list(model.theta_labels()).index('tbirth')]:.8f} Gyr "
+                  f"({theta[list(model.theta_labels()).index('tbirth')]*1.0e+3:.3f} Myr)")
+
+            if 'agebins' in model.params:
+
+                ab = model.params['agebins']
+                print(f'  agebins shape: {ab.shape}')
+                print(f'  agebins (log yr):\n{ab!r}')
+                print(f'  bin widths (yr) REPR: {np.diff(np.power(10, ab)).flatten()!r}')
+
+            raise # re-raise instead of continuing, so we see the root cause
+
         predictions = [prediction.tolist() for prediction in predictions]
         smoothed_spectrum = model._smooth_spec
 
