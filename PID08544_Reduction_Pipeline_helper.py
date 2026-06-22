@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/15 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/22 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -37,20 +37,20 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     # Obs1
 
-    asn_files_Obs1 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID8544_Obs1/MAST/', f'*_{asn_files_suffix}')))
+    asn_files_Obs1 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs1/MAST/', f'*_{asn_files_suffix}')))
     asn_files_Obs1_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs1 if 'spec2' in asn_file][::-1]
     asn_files_Obs1_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs1 if 'spec3' in asn_file]
 
     directories_Obs1 = {
         'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID8544_Obs1/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/JADES_GSz14/thumbnails/'), 
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/'), 
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/MAST/'), 
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Uncal/'), 
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage1/'), 
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage2/'), 
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage3/'), 
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Analysis/'), 
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs1_Spec2, asn_files_Obs1_Spec3], None (default)
         'CoordinateShift': [+0.57851171, +1.61563086], # [+0.57851171, +1.61563086], None (default)
         'ColumnsToMask': None, 'RowsToMask': None, # None, None (default)
@@ -70,20 +70,20 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     # Obs2
 
-    asn_files_Obs2 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID8544_Obs2/MAST/', f'*_{asn_files_suffix}')))
+    asn_files_Obs2 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs2/MAST/', f'*_{asn_files_suffix}')))
     asn_files_Obs2_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs2 if 'spec2' in asn_file][::-1]
     asn_files_Obs2_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs2 if 'spec3' in asn_file]
 
     directories_Obs2 = {
         'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID8544_Obs2/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/JADES_GSz14/thumbnails/'), 
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/'), 
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/MAST/'), 
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Uncal/'), 
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage1/'), 
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage2/'), 
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage3/'), 
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Analysis/'), 
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs2_Spec2, asn_files_Obs2_Spec3], None (default)
         'CoordinateShift': [+0.76080378, +1.66932663], # [+0.76080378, +1.66932663], None (default)
         'ColumnsToMask': None, 'RowsToMask': None, # None, None (default)
@@ -103,20 +103,20 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     # Obs3
 
-    asn_files_Obs3 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID8544_Obs3/MAST/', f'*_{asn_files_suffix}')))
+    asn_files_Obs3 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs3/MAST/', f'*_{asn_files_suffix}')))
     asn_files_Obs3_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs3 if 'spec2' in asn_file][::-1]
     asn_files_Obs3_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs3 if 'spec3' in asn_file]
 
     directories_Obs3 = {
         'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID8544_Obs3/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/JADES_GSz14/thumbnails/'), 
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/'), 
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/MAST/'), 
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Uncal/'), 
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage1/'), 
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage2/'), 
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage3/'), 
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Analysis/'), 
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs3_Spec2, asn_files_Obs3_Spec3], None (default)
         'CoordinateShift': [+0.33483082, +1.88349722], # [+0.33483082, +1.88349722], None (default)
         'ColumnsToMask': None, 'RowsToMask': [243, 244, 245, 281, 282, 283], # None, None (default)
@@ -136,20 +136,20 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     # Obs4
 
-    asn_files_Obs4 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID8544_Obs4/MAST/', f'*_{asn_files_suffix}')))
+    asn_files_Obs4 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs4/MAST/', f'*_{asn_files_suffix}')))
     asn_files_Obs4_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs4 if 'spec2' in asn_file][::-1]
     asn_files_Obs4_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs4 if 'spec3' in asn_file]
 
     directories_Obs4 = {
         'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID8544_Obs4/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/JADES_GSz14/thumbnails/'), 
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/'), 
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/MAST/'), 
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Uncal/'), 
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage1/'), 
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage2/'), 
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage3/'), 
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Analysis/'), 
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs4_Spec2, asn_files_Obs4_Spec3], None (default)
         'CoordinateShift': [+0.21278994, +1.49675700], # [+0.21278994, +1.49675700], None (default)
         'ColumnsToMask': [9, 10, 11], 'RowsToMask': [281, 282, 283], # None, None (default)
@@ -293,7 +293,9 @@ from specutils.manipulation import box_smooth, gaussian_smooth
 from specutils.manipulation import FluxConservingResampler, LinearInterpolatedResampler
 
 import photutils
-from photutils.background import Background2D, MeanBackground, MedianBackground, SExtractorBackground
+from photutils.aperture import CircularAperture, aperture_photometry
+from photutils.background import Background2D, MeanBackground, MedianBackground, SExtractorBackground, BkgZoomInterpolator
+from photutils.segmentation import SourceFinder, SourceCatalog
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -317,6 +319,8 @@ from astropy.io import fits
 
 from dust_attenuation.averages import C00
 
+from tweakwcs import fit_wcs, FITSWCS, TPMatch
+
 os.environ['CRDS_PATH'] = '{}/crds_cache'.format(os.environ.get('HOME'))
 os.environ['CRDS_SERVER_URL'] = 'https://jwst-crds.stsci.edu'
 
@@ -328,8 +332,7 @@ from jwst.extract_1d import Extract1dStep
 from jwst.associations import asn_from_list as afl
 from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
-from jwst.pipeline import Detector1Pipeline, Spec2Pipeline, Spec3Pipeline
-
+from jwst.pipeline import Detector1Pipeline, Image2Pipeline, Spec2Pipeline, Spec3Pipeline
 import jwst.extract_1d.source_location as source_location
 
 import stdatamodels
@@ -761,6 +764,267 @@ def inspect_files(pathname, filenames):
         except Exception as e:
 
             print(f'Error inspecting {filename.split('/')[-1]}: {str(e)}')
+
+###
+
+def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5, detect_npixels=20, box_size=30, filter_size=1, 
+    exclude_percentile=10.0, aperture_radius=0.35, snr_cut_detection=20.0, snr_cut_reference=20.0, match_radius=0.50, 
+    search_radius=10.0, separation=0.20, tolerance=2.0, use2dhist=True):
+
+    """
+    Detects sources in JWST/MIRI verification imaging, cross-matches them against 
+    a reference photometric catalog, and computes the [dx, dy] pixel shift 
+    needed to align the imaging data to the reference astrometry.
+ 
+    Parameters:
+    -----------
+    directories : dict
+        Standard directories dictionary; uses 'Uncal', 'Det1', and 'Thumbnails'.
+    subtract_bkg : bool
+        Whether or not to subtract the background before source detection.
+    detect_nsigma : float
+        Detection threshold in units of sigma above the background RMS.
+    detect_npixels : int
+        Minimum number of connected pixels for a source to be kept.
+    box_size : int
+        Background estimation box size (pixels) for Background2D.
+    filter_size : int
+        Background median filter size (pixels) for Background2D.
+    exclude_percentile : float
+        Percentile threshold for background mask exclusion.
+    aperture_radius : float
+        Aperture radius (arcsec) for flux measurements.
+    snr_cut_detection : float
+        Minimum source SNR for the detection catalog.
+    snr_cut_reference : float
+        Minimum source SNR for the reference catalog.
+    match_radius : float
+        Coarse spatial cross-match radius (arcsec).
+    search_radius : float
+        TPMatch search radius (pixels).
+    separation : float
+        TPMatch separation threshold (pixels).
+    tolerance : float
+        TPMatch matching tolerance for sources (pixels).
+    use2dhist : bool
+        Whether or not TPMatch uses a 2D histogram for the initial search.
+    Returns:
+    --------
+    coordinate_shift : list or None
+        [dx, dy] pixel shift compatible with tweak_reference_coordinates,
+        or None if auto-calculation cannot complete.
+
+    """
+
+    # Find the uncal files associated with the verification images
+
+    filenames_vi_uncal = sorted(glob.glob(os.path.join(directories['Uncal'], '*_03102_*_uncal.fits')))
+
+    if len(filenames_vi_uncal) == 0:
+
+        print(f'WARNING: No verification imaging files found in {directories["Uncal"]}'); print()
+
+        return None
+
+    # Find the photometric reference catalog for cross-matching sources
+
+    filenames_reference = sorted(glob.glob(os.path.join(directories['Thumbnails'], '*cat*.fits')))
+
+    if len(filenames_reference) == 0:
+
+        print(f'WARNING: No reference catalog found in {directories["Thumbnails"]}'); print()
+
+        return None
+
+    hdu = fits.open(filenames_reference[0])
+
+    reference_catalog = Table(hdu[1].data)
+
+    hdu.close()
+
+    # Process each verification imaging file through Stage 1 and Stage 2 of the reduction pipeline
+
+    filenames_vi_i2d = []
+
+    for i, filename in enumerate(filenames_vi_uncal):
+
+        try:
+
+            print(f'Processing verification imaging {i+1}/{len(filenames_vi_uncal)}: {os.path.basename(filename)}')
+
+            Detector1Pipeline.call(filename, save_results=True, output_dir=directories['Det1'])
+
+            filename_rate = os.path.join(directories['Det1'], 
+                os.path.basename(filename).replace('_uncal.fits', '_rate.fits'))
+
+            hdu = fits.open(filename_rate)
+
+            hdu[0].header['EXP_TYPE'] = 'MIR_IMAGE'
+
+            hdu.writeto(filename_rate, overwrite=True)
+
+            hdu.close()
+
+            Image2Pipeline.call(filename_rate, save_results=True, output_dir=directories['Det1'],
+                steps={
+                    'assign_wcs': {'skip': False},
+                    'bkg_subtract': {'skip': False},
+                    'flat_field': {'skip': False},
+                    'resample': {'skip': False},
+                    'photom': {'skip': False},
+                })
+
+            filenames_vi_i2d.append(filename_rate.replace('_rate.fits', '_i2d.fits'))
+
+        except Exception as e:
+
+            print(f'  ERROR processing {os.path.basename(filename)}: {str(e)}'); print()
+
+    if len(filenames_vi_i2d) == 0:
+
+        print(f'WARNING: No verification imaging files were successfully processed'); print()
+
+        return None
+
+    # Detect sources, cross-match to the reference catalog, and compute the WCS shift for each i2d image
+
+    shifts = []
+
+    for i, filename in enumerate(filenames_vi_i2d):
+
+        try:
+
+            print(f'Calculating shift {i+1}/{len(filenames_vi_i2d)}: {os.path.basename(filename)}')
+
+            datamodel = datamodels.open(filename)
+
+            coverage_mask = np.isnan(datamodel.data)
+
+            image = 1e+6*1e+9*datamodel.data*datamodel.meta.photometry.pixelarea_steradians
+
+            bkg = Background2D(image, box_size=box_size,
+                exclude_percentile=exclude_percentile,
+                sigma_clip=SigmaClip(sigma=3.0),
+                fill_value=np.nan,
+                filter_size=filter_size,
+                coverage_mask=coverage_mask,
+                bkg_estimator=SExtractorBackground(),
+                interpolator=BkgZoomInterpolator(order=4),
+            )
+
+            if subtract_bkg: 
+
+                image = image - bkg.background
+
+            finder = SourceFinder(npixels=detect_npixels, 
+                deblend=True, contrast=0.05, nlevels=16, progress_bar=False)
+
+            segmentation_map = finder(image, detect_nsigma*bkg.background_rms, mask=coverage_mask)
+
+            catalog = SourceCatalog(image, segmentation_map, error=bkg.background_rms,
+                wcs=datamodel.meta.wcs, mask=coverage_mask, progress_bar=False)
+
+            catalog = Table(catalog.to_table(['label', 'xcentroid_win', 'ycentroid_win', 'sky_centroid_win']))
+
+            detection_ra, detection_dec = catalog['sky_centroid_win'].ra.deg, catalog['sky_centroid_win'].dec.deg
+
+            if datamodel.meta.wcsinfo.cdelt1 is not None:
+
+                pixscale = 3600.0*datamodel.meta.wcsinfo.cdelt1
+
+            else:
+
+                pixscale = np.sqrt(0.01217199)
+
+            positions = [(x, y) for x, y in zip(catalog['xcentroid_win'], catalog['ycentroid_win'])]
+
+            aperture = CircularAperture(positions, r=aperture_radius/pixscale)
+
+            phot_table = aperture_photometry(image, aperture, error=bkg.background_rms)
+
+            detection_flux_error = np.array(phot_table['aperture_sum_err'])
+            detection_flux = np.array(phot_table['aperture_sum'])
+
+            snr_detection = detection_flux/detection_flux_error
+            snr_reference = reference_catalog['F444W_CIRC3']/reference_catalog['F444W_CIRC3_e']
+
+            keep_detection = (snr_detection > snr_cut_detection) & (np.isfinite(snr_detection))
+            keep_reference = (snr_reference > snr_cut_reference) & (np.isfinite(snr_reference))
+
+            detection_ra, detection_dec = detection_ra[keep_detection], detection_dec[keep_detection]
+            reference_ra, reference_dec = reference_catalog['RA'][keep_reference], reference_catalog['DEC'][keep_reference]
+
+            # Cross-match sources from the detection catalog to those in the reference catalog
+
+            detection_coords = SkyCoord(ra=detection_ra*u.deg, dec=detection_dec*u.deg)
+            reference_coords = SkyCoord(ra=reference_ra*u.deg, dec=reference_dec*u.deg)
+
+            idx, d2d, _ = detection_coords.match_to_catalog_sky(reference_coords)
+
+            detection_matched_idx = np.where(d2d < match_radius*u.arcsec)[0]
+
+            reference_matched_idx = idx[detection_matched_idx]
+
+            if len(detection_matched_idx) < 3:
+
+                print(f'WARNING: Fewer than 3 matched sources for {os.path.basename(filename)}; skipping'); print()
+
+                continue
+
+            detection_matched_ra, detection_matched_dec = detection_ra[detection_matched_idx], detection_dec[detection_matched_idx]
+            reference_matched_ra, reference_matched_dec = reference_ra[reference_matched_idx], reference_dec[reference_matched_idx]
+
+            # Compute the WCS shift from the verification images via TPMatch
+
+            with fits.open(filename) as hdul: wcs = WCS(hdul[1].header)
+
+            detection_x, detection_y = wcs.wcs_world2pix(detection_matched_ra, detection_matched_dec, 0)
+
+            keep_detector = (detection_x >= 0) & (detection_y >= 0)
+
+            positions_new_x = detection_x[keep_detector]
+            positions_new_y = detection_y[keep_detector]
+
+            catalog_detection = Table([positions_new_x, positions_new_y], names=('x', 'y'))
+
+            catalog_reference = Table([reference_matched_ra[keep_detector], reference_matched_dec[keep_detector]], names=('RA', 'DEC'))
+
+            wcsCorrector = FITSWCS(wcs)
+
+            catalog_reference_idx, catalog_detection_idx = TPMatch(searchrad=search_radius, separation=separation, 
+                tolerance=tolerance, use2dhist=use2dhist)(catalog_reference, catalog_detection, tp_wcs=wcsCorrector)
+
+            if len(catalog_reference_idx) < 3:
+
+                print(f'WARNING: Fewer than 3 matched sources after TPMatch for {os.path.basename(filename)}; skipping'); print()
+
+                continue
+
+            fit_wcs(catalog_reference[catalog_reference_idx], catalog_detection[catalog_detection_idx], 
+                wcsCorrector, fitgeom='shift') # fitgeom options are "general" and "shift"
+                # "general" includes independent rotation and scale for each axis
+
+            shift = wcsCorrector.meta['fit_info']['shift']
+
+            shifts.append(shift)
+
+            print(f'  Shift for {os.path.basename(filename)}: [{shift[0]:+.8f}, {shift[1]:+.8f}]'); print()
+
+        except Exception as e:
+
+            print(f'  ERROR processing {os.path.basename(filename)}: {str(e)}'); print()
+
+    if len(shifts) == 0:
+
+        print(f'WARNING: No coordinate shift could be calculated from the verification imaging'); print()
+
+        return None
+
+    coordinate_shift = [float(np.median([s[0] for s in shifts])), float(np.median([s[1] for s in shifts]))]
+
+    print(f'Median coordinate shift ({len(shifts)} files): [{coordinate_shift[0]:+.8f}, {coordinate_shift[1]:+.8f}]'); print()
+
+    return coordinate_shift
 
 ###
 
@@ -3740,14 +4004,30 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
     filenames_rates = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rate.fits')))
     filenames_rateints = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rateints.fits')))
 
-    if tweak and directories['CoordinateShift'] is not None:
+    filenames_rates = [filename for filename in filenames_rates if '_03102_' not in os.path.basename(filename)]
+    filenames_rateints = [filename for filename in filenames_rateints if '_03102_' not in os.path.basename(filename)]
 
-        tweak_reference_coordinates(filenames_rates, coordinate_shift=directories['CoordinateShift'], 
-            offset_additional=(+0.0, +0.0), write_suffix='_tweak_rate.fits')
+    if tweak:
 
-        filenames_rates = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_tweak_rate.fits')))
+        coordinate_shift = directories['CoordinateShift']
 
-        temp_filename_infix = 'mirimage_tweak_clean'
+        if coordinate_shift is None:
+
+            coordinate_shift = calculate_coordinate_shift(directories)
+
+        if coordinate_shift is not None:
+
+            tweak_reference_coordinates(filenames_rates, coordinate_shift=coordinate_shift,
+                offset_additional=(+0.0, +0.0), write_suffix='_tweak_rate.fits')
+
+            filenames_rates = [f for f in sorted(glob.glob(os.path.join(directories['Det1'], 
+                '*_mirimage_tweak_rate.fits'))) if '_03102_' not in os.path.basename(f)]
+
+            temp_filename_infix = 'mirimage_tweak_clean'
+
+        else:
+
+            temp_filename_infix = 'mirimage_clean'
 
     else:
 
@@ -5724,8 +6004,6 @@ def attenuation_monte_carlo(flux_ha, error_ha, flux_hb, error_hb, attenuation_cu
     p05, p16, p50, p84, p95 = np.nanpercentile(samples_attenuation, [5, 16, 50, 84, 95])
 
     return [attenuation, p05, p16, p50, p84, p95], samples_attenuation
-
-###
 
 ###
 
