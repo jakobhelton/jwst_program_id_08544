@@ -515,6 +515,29 @@ else:
 
 ###
 
+def get_file_type(filename):
+
+    """
+    Returns the EXP_TYPE keyword from the primary header of a JWST FITS file.
+
+    Parameters:
+    -----------
+    filename : str
+        Path to the FITS file
+
+    Returns:
+    --------
+    exp_type : str or None
+        Value of the EXP_TYPE header keyword (e.g., 'MIR_TACQ', 
+        'MIR_TACONFIRM', 'MIR_LRS-FIXEDSLIT'), or None if not present
+    """
+
+    with fits.open(filename, memmap=True) as hdul:
+
+        return hdul[0].header.get('EXP_TYPE', None)
+
+###
+
 # https://jwst-pipeline.readthedocs.io/en/latest/jwst/pipeline/calwebb_detector1.html
 
 def run_detector1_pipeline(directories, custom_steps=None):
@@ -536,10 +559,9 @@ def run_detector1_pipeline(directories, custom_steps=None):
 
     uncal_files = sorted(glob.glob(os.path.join(directories['Uncal'], '*_uncal.fits')))
 
-    # Removes files that were used for target acquisition (02101) and verification (3102)
+    # Removes files that were used for target acquisition (MIR_TACQ) and verification (MIR_TACONFIRM)
 
-    uncal_files = [file for file in uncal_files if '_02101_' not in os.path.basename(file)]
-    uncal_files = [file for file in uncal_files if '_03102_' not in os.path.basename(file)]
+    uncal_files = [filename for filename in uncal_files if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
 
     if not uncal_files:
 
@@ -834,7 +856,8 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
 
     # Find the uncal files associated with the verification images
 
-    filenames_vi_uncal = sorted(glob.glob(os.path.join(directories['Uncal'], '*_03102_*_uncal.fits')))
+    filenames_vi_uncal = [filename for filename in sorted(glob.glob(os.path.join(directories['Uncal'], '*_uncal.fits')))
+        if get_file_type(filename) == 'MIR_TACONFIRM']
 
     if len(filenames_vi_uncal) == 0:
 
@@ -875,7 +898,7 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
 
             hdu = fits.open(filename_rate)
 
-            hdu[0].header['EXP_TYPE'] = 'MIR_IMAGE'
+            hdu[0].header['EXP_TYPE'] = 'MIR_TACONFIRM'
 
             hdu.writeto(filename_rate, overwrite=True)
 
@@ -4039,8 +4062,8 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
     filenames_rates = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rate.fits')))
     filenames_rateints = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rateints.fits')))
 
-    filenames_rates = [filename for filename in filenames_rates if '_03102_' not in os.path.basename(filename)]
-    filenames_rateints = [filename for filename in filenames_rateints if '_03102_' not in os.path.basename(filename)]
+    filenames_rates = [filename for filename in filenames_rates if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
+    filenames_rateints = [filename for filename in filenames_rateints if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
 
     if tweak:
 
@@ -4055,8 +4078,8 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             tweak_reference_coordinates(filenames_rates, coordinate_shift=coordinate_shift,
                 offset_additional=(+0.0, +0.0), write_suffix='_tweak_rate.fits')
 
-            filenames_rates = [f for f in sorted(glob.glob(os.path.join(directories['Det1'], 
-                '*_mirimage_tweak_rate.fits'))) if '_03102_' not in os.path.basename(f)]
+            filenames_rates = [filename for filename in sorted(glob.glob(os.path.join(directories['Det1'], 
+                '*_mirimage_tweak_rate.fits'))) if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
 
             temp_filename_infix = 'mirimage_tweak_clean'
 
