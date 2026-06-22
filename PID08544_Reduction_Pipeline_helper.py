@@ -775,6 +775,22 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
     Detects sources in JWST/MIRI verification imaging, cross-matches them against 
     a reference photometric catalog, and computes the [dx, dy] pixel shift 
     needed to align the imaging data to the reference astrometry.
+
+    Supports two reference catalog formats:
+
+      - JADES photometric catalog (e.g., 3215_phot_cat_v0p9p4.fits): uses F444W_CIRC3
+        and F444W_CIRC3_e columns, corresponding to F444W circular aperture photometry
+        with a radius of 0.35 arcsec.
+      - DAWN JWST Archive (DJA) grizli detection catalog (e.g., *_ir_cat.fits): uses
+        FLUX_APER_0 and FLUXERR_APER_0 columns, corresponding to aperture photometry
+        on the combined infrared detection image with a radius of 0.36 arcsec. This 
+        serves as a proxy for F444W-band photometry, since the DJA infrared 
+        detection image is heavily weighted toward the F444W filter.
+
+    In both cases, F444W or a F444W-equivalent SNR cut is applied because F444W is the 
+    NIRCam filter closest in wavelength to MIRI/LRS, maximizing overlap with sources 
+    detectable in the MIRI verification imaging. The circular aperture sizes are 
+    equivalent across the two catalog formats.
  
     Parameters:
     -----------
@@ -946,7 +962,26 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
             detection_flux = np.array(phot_table['aperture_sum'])
 
             snr_detection = detection_flux/detection_flux_error
-            snr_reference = reference_catalog['F444W_CIRC3']/reference_catalog['F444W_CIRC3_e']
+
+            try:
+
+                snr_reference = reference_catalog['F444W_CIRC3']/reference_catalog['F444W_CIRC3_e']
+
+            except (KeyError, ValueError):
+
+                try:
+
+                    snr_reference = reference_catalog['FLUX_APER_0']/reference_catalog['FLUXERR_APER_0']
+
+                except (KeyError, ValueError):
+
+                    temp_name = os.path.basename(filenames_reference[0])
+
+                    print(f'WARNING: Reference catalog {temp_name} contains no recognized F444W flux columns')
+                    print(f'  Expected JADES format: F444W_CIRC3 / F444W_CIRC3_e (aperture radius = 0.35 arcsec)')
+                    print(f'  Expected DJA format:   FLUX_APER_0 / FLUXERR_APER_0 (aperture radius = 0.36 arcsec)'); print()
+
+                    return None
 
             keep_detection = (snr_detection > snr_cut_detection) & (np.isfinite(snr_detection))
             keep_reference = (snr_reference > snr_cut_reference) & (np.isfinite(snr_reference))
