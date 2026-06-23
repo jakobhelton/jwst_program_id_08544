@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/22 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/23 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -1236,7 +1236,7 @@ def get_nod_positions_from_wcs(filenames_nod1, filenames_nod2, verbose=True):
 
     elif filenames_nod2 is None:
 
-        positions_nod1 = [find_source_pixel(f) for f in filenames_nod1]
+        positions_nod1 = [find_source_pixel(filename) for filename in filenames_nod1]
 
         position_nod1 = np.median(positions_nod1)
 
@@ -1244,8 +1244,8 @@ def get_nod_positions_from_wcs(filenames_nod1, filenames_nod2, verbose=True):
 
     elif filenames_nod2 is not None:
 
-        positions_nod1 = [find_source_pixel(f) for f in filenames_nod1]
-        positions_nod2 = [find_source_pixel(f) for f in filenames_nod2]
+        positions_nod1 = [find_source_pixel(filename) for filename in filenames_nod1]
+        positions_nod2 = [find_source_pixel(filename) for filename in filenames_nod2]
 
         position_nod1 = np.median(positions_nod1)
         position_nod2 = np.median(positions_nod2)
@@ -1253,8 +1253,8 @@ def get_nod_positions_from_wcs(filenames_nod1, filenames_nod2, verbose=True):
         if verbose:
 
             print(f'Derived nod positions from WCS:')
-            print(f'  Nod 1 (all files): {[f'{p:.2f}' for p in positions_nod1]}')
-            print(f'  Nod 2 (all files): {[f'{p:.2f}' for p in positions_nod2]}')
+            print(f'  Nod 1 (all files): {[f'{position:.2f}' for position in positions_nod1]}')
+            print(f'  Nod 2 (all files): {[f'{position:.2f}' for position in positions_nod2]}')
             print(f'  Nod 1 (median value) = {position_nod1:.2f}')
             print(f'  Nod 2 (median value) = {position_nod2:.2f}')
 
@@ -2567,7 +2567,7 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
         return
 
-    is_bsub = all('_bsub_combined.fits' in f for f in filenames)
+    is_bsub = all('_bsub_combined.fits' in filename for filename in filenames)
 
     try:
 
@@ -2853,7 +2853,7 @@ def subtract_background_iterative(filenames, box_sizes=[(9, 3), (3, 9), (3, 3)],
 
     # Defines the trace positions to mask when iteratively subtracting the background
 
-    is_bsub = all('_bsub_combined.fits' in f for f in filenames)
+    is_bsub = all('_bsub_combined.fits' in filename for filename in filenames)
 
     if is_bsub:
 
@@ -3102,10 +3102,22 @@ def tapered_column_extraction(extraction_width=3.0):
 
 ###
 
-def plot_slit_overlay(directories, zred=14.1796):
+def plot_slit_overlay(directories, zred=14.1796, filename_infix=None):
 
     """
-    Plots the slit overlays from each of the visits on an RGB cutout surrounding the target galaxy.
+    Plots the MIRI/LRS slit footprints for each observation on an RGB false-color thumbnail.
+
+    For each set of observations in the list of directories, read the MIRI/LRS assign_wcs files 
+    to extract the on-sky slit footprint at each nod position and overlays them on a JWST/NIRCam 
+    RGB cutout (F115W = blue, F277W = green, F444W = red). Compass arrows, an optional angular 
+    scale bar, and an optional physical size label are also drawn.
+
+    When multiple observation sets are supplied, one representative nod pair per observation is
+    plotted to avoid overcrowding. When only a single observation set is supplied, all nod pairs
+    (one per MIRI/LRS science exposure sequence) are shown.
+
+    The figure is saved as PDF, PNG, and JPG to both the Stage2 and Default_Pipeline_Stage2
+    directories of the last observation in the list.
 
     Parameters:
     -----------
@@ -3113,6 +3125,8 @@ def plot_slit_overlay(directories, zred=14.1796):
         List of dictionaries of directories
     zred : float
         Redshift used for calculating physical sizes from angular separations
+    filename_infix : str or None, optional
+        Specifies which variant of the assign_wcs files to use when reading slit footprints
     """
 
     # Reads in thumbnails to overlay slit on an RGB image around the target galaxy
@@ -3188,9 +3202,51 @@ def plot_slit_overlay(directories, zred=14.1796):
 
             filenames_assign_wcs = sorted(glob.glob(os.path.join(temp_temp_pathname, '*assign_wcs.fits')))
 
-        for j, filename_assign_wcs in enumerate(filenames_assign_wcs[::2]):
+        if filename_infix is not None:
 
-            model_Nod1 = datamodels.open(filename_assign_wcs)
+            # Filter to only files matching the specified infix variant
+
+            target_suffix = f'_{filename_infix}_assign_wcs.fits'
+
+            filenames_assign_wcs_deduplicate = sorted([filename for filename in filenames_assign_wcs
+                if os.path.basename(filename).endswith(target_suffix)])
+
+        else:
+
+            # Deduplicate: for each unique exposure keep the "best" version (tweak_clean > clean > plain)
+
+            seen_bases, filenames_assign_wcs_deduplicate = set(), []
+
+            for filename in sorted(filenames_assign_wcs, key=lambda x: (
+                0 if '_tweak_clean_assign_wcs.fits' in x else
+                1 if '_clean_assign_wcs.fits' in x else 2
+            )):
+
+                base = os.path.basename(filename)
+
+                for suffix in ('_tweak_clean_assign_wcs.fits', '_clean_assign_wcs.fits', '_assign_wcs.fits'):
+
+                    if base.endswith(suffix):
+
+                        key = base[:-len(suffix)]; break
+
+                if key not in seen_bases:
+
+                    seen_bases.add(key); filenames_assign_wcs_deduplicate.append(filename)
+
+            filenames_assign_wcs_deduplicate = sorted(filenames_assign_wcs_deduplicate)
+
+        # Only Nod1 (00001) files; derive Nod2 partner by filename substitution
+
+        filenames_nod1 = [filename for filename in filenames_assign_wcs_deduplicate if '_00001_' in os.path.basename(filename)]
+
+        # Multiple observation sets: one nod pair per set; single set: all nod pairs
+
+        max_pairs = 1 if len(directories) > 1 else len(filenames_nod1)
+
+        for j, filename_nod1 in enumerate(filenames_nod1[:max_pairs]):
+
+            model_Nod1 = datamodels.open(filename_nod1)
 
             sregion_Nod1 = model_Nod1.meta.wcsinfo.s_region
             target_RA_Nod1 =float(model_Nod1.meta.target.ra)
@@ -3204,7 +3260,7 @@ def plot_slit_overlay(directories, zred=14.1796):
             slit_DECs_Nod1 = np.append(slit_DECs_Nod1, slit_DECs_Nod1[0]).tolist()
             slit_RAs_Nod1 = np.append(slit_RAs_Nod1, slit_RAs_Nod1[0]).tolist()
 
-            model_Nod2 = datamodels.open(filename_assign_wcs.replace('00001', '00002'))
+            model_Nod2 = datamodels.open(filename_nod1.replace('00001', '00002'))
 
             sregion_Nod2 = model_Nod2.meta.wcsinfo.s_region
             target_RA_Nod2 =float(model_Nod2.meta.target.ra)
@@ -3304,17 +3360,17 @@ def plot_slit_overlay(directories, zred=14.1796):
             coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
 
             ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
-                color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod1}}$', zorder=i)
+                color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.8, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod1}}$', zorder=i)
             ax.plot(coords_slit_Nod2[0].tolist(), coords_slit_Nod2[1].tolist(), 
-                color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.5, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod2}}$', zorder=i)
+                color=temp_colors[2*i+1], ls='-', lw=4.5, alpha=0.8, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod2}}$', zorder=i)
 
             ax.plot(coords_target_Nod1[0].tolist(), coords_target_Nod1[1].tolist(), 
-                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
+                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.8)
             ax.plot(coords_target_Nod2[0].tolist(), coords_target_Nod2[1].tolist(), 
-                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.5)
+                color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.8)
 
-    # fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
-    fig.suptitle(r'$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
+    if True: fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
+    else: fig.suptitle(r'$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
 
     ax.set_xlabel(''); ax.set_ylabel('')
     ax.set_xticks([]); ax.set_yticks([])
@@ -3653,7 +3709,7 @@ def inspect_column_and_row_sums(pathname, filenames_1, filenames_2, offset=+1.0,
 
     plt.close()
     fig = plt.figure(figsize=(figsizex, figsizey), constrained_layout=True)
-    grid = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.0], width_ratios=[1.0, 1.0], hspace=0.3, wspace=0.1)
+    grid = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.0], width_ratios=[1.0, 1.0], hspace=0.1, wspace=0.1)
     ax1, ax2 = fig.add_subplot(grid[0, 0]), fig.add_subplot(grid[0, 1])
     ax3, ax4 = fig.add_subplot(grid[1, 0]), fig.add_subplot(grid[1, 1])
 
@@ -4185,7 +4241,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             # Inspect the slit placements on the sky
 
-            plot_slit_overlay([directories], zred=zred)
+            plot_slit_overlay([directories], zred=zred, filename_infix=temp_filename_infix)
 
             # Inspect the full images from the cal files
 
@@ -4430,8 +4486,8 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     else:
 
-                        obs_numbers = set(int(os.path.basename(f).split('jw')[1][5:8]) 
-                            for f in filenames_cal)
+                        obs_numbers = set(int(os.path.basename(filename).split('jw')[1][5:8]) 
+                            for filename in filenames_cal)
 
                         if len(obs_numbers) > 1:
 
@@ -4489,8 +4545,8 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                 else:
 
-                    obs_numbers = set(int(os.path.basename(f).split('jw')[1][5:8]) 
-                        for f in filenames_bsub)
+                    obs_numbers = set(int(os.path.basename(filename).split('jw')[1][5:8]) 
+                        for filename in filenames_bsub)
 
                     if len(obs_numbers) > 1:
 
@@ -4945,7 +5001,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
                 temp_image = ax.pcolormesh(xx, yy, data[:, index_xmin:index_xmax], vmin=vmin_zscale, vmax=vmax_zscale,
                     cmap=cmap, shading='face', edgecolors='face', lw=0, rasterized=True)
 
-                ymin_2d, ymax_2d = EXTRXSTR, EXTRXSTP # ax.get_ylim()
+                ymin_2d, ymax_2d = 0.0, 60.0 # ax.get_ylim(); 0.0, data.shape[0]; EXTRXSTR, EXTRXSTP
 
                 ax.vlines(vlines, ymax_2d-10+1, ymax_2d, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
                 ax.vlines(vlines, ymin_2d, ymin_2d+10+0, colors=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
@@ -4956,8 +5012,7 @@ def plot_full_spectrum(pathname, pathname_s2d, pathname_x1d, zred=14.1796, galax
                     ax.plot(temp_xarray, lower_extraction, c=colors_5[3], ls='-', lw=3, alpha=1.0, zorder=2)
 
                 ax.set_xlim(xmin, xmax)
-                ax.set_ylim(0.0, data.shape[0])
-                ax.set_ylim(EXTRXSTR, EXTRXSTP)
+                ax.set_ylim(ymin_2d, ymax_2d)
                 ax.set_xticks(xticks); ax.set_xticklabels([])
                 ax.xaxis.set_minor_locator(MultipleLocator(xstep))
                 ax.yaxis.set_minor_locator(AutoMinorLocator(4))
