@@ -3102,7 +3102,7 @@ def tapered_column_extraction(extraction_width=3.0):
 
 ###
 
-def plot_slit_overlay(directories, zred=14.1796, filename_infix=None):
+def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=None):
 
     """
     Plots the MIRI/LRS slit footprints for each observation on an RGB false-color thumbnail.
@@ -3127,45 +3127,71 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None):
         Redshift used for calculating physical sizes from angular separations
     filename_infix : str or None, optional
         Specifies which variant of the assign_wcs files to use when reading slit footprints
+    filters : dict or None, optional
+        Dictionary mapping RGB channels to filter names, e.g., {'red': 'F444W', 'green': 'F277W', 'blue': 'F115W'}
     """
+
+    if filters is None:
+
+        filters = {'red': 'F444W', 'green': 'F277W', 'blue': 'F115W'}
+
+    if set(filters.keys()) != {'red', 'green', 'blue'}:
+
+        raise ValueError(f'filters must contain exactly the keys "red", "green", and "blue"; got {set(filters.keys())}')
+
+    filter_R, filter_G, filter_B = filters['red'], filters['green'], filters['blue']
 
     # Reads in thumbnails to overlay slit on an RGB image around the target galaxy
 
     try:
 
-        F444W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F444W*.fits'))[0])
-        F277W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F277W*.fits'))[0])
-        F115W = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*F115W*.fits'))[0])
+        hdu_R = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*{filter_R}*.fits'))[0])
+        hdu_G = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*{filter_G}*.fits'))[0])
+        hdu_B = fits.open(sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*{filter_B}*.fits'))[0])
 
-        F444W_head, F444W_data = F444W[1].header, F444W[1].data
-        F277W_head, F277W_data = F277W[1].header, F277W[1].data
-        F115W_head, F115W_data = F115W[1].header, F115W[1].data
+        head_hdu_R, data_hdu_R = hdu_R[1].header, hdu_R[1].data
+        head_hdu_G, data_hdu_G = hdu_G[1].header, hdu_G[1].data
+        head_hdu_B, data_hdu_B = hdu_B[1].header, hdu_B[1].data
 
-        F444W_wcs = WCS(F444W_head)
-        F277W_wcs = WCS(F277W_head)
-        F115W_wcs = WCS(F115W_head)
+        wcs_R = WCS(head_hdu_R)
+        wcs_G = WCS(head_hdu_G)
+        wcs_B = WCS(head_hdu_B)
 
-        F444W.close()
-        F277W.close()
-        F115W.close()
+        hdu_R.close()
+        hdu_G.close()
+        hdu_B.close()
 
     except Exception:
 
+        if not sorted(glob.glob(f'{directories[0]['Thumbnails']}/*.fits')):
+
+            raise FileNotFoundError(f'No thumbnail file(s) found in {directories[0]['Thumbnails']!r}')
+
         MULTI = fits.open(sorted(glob.glob(f'{directories[0]['Thumbnails']}/*.fits'))[0])
 
-        F444W_head, F444W_data = MULTI['F444W-CLEAR'].header, MULTI['F444W-CLEAR'].data
-        F277W_head, F277W_data = MULTI['F277W-CLEAR'].header, MULTI['F277W-CLEAR'].data
-        F115W_head, F115W_data = MULTI['F115W-CLEAR'].header, MULTI['F115W-CLEAR'].data
+        extension_names = [hdu.name for hdu in MULTI]
 
-        F444W_wcs = WCS(F444W_head)
-        F277W_wcs = WCS(F277W_head)
-        F115W_wcs = WCS(F115W_head)
+        extension_R = next((name for name in [f'{filter_R}-CLEAR', filter_R] if name in extension_names), None)
+        extension_G = next((name for name in [f'{filter_G}-CLEAR', filter_G] if name in extension_names), None)
+        extension_B = next((name for name in [f'{filter_B}-CLEAR', filter_B] if name in extension_names), None)
+
+        if extension_R is None: raise ValueError(f'Filter "{filter_R}" not found; available extensions: {extension_names}')
+        if extension_G is None: raise ValueError(f'Filter "{filter_G}" not found; available extensions: {extension_names}')
+        if extension_B is None: raise ValueError(f'Filter "{filter_B}" not found; available extensions: {extension_names}')
+
+        head_hdu_R, data_hdu_R = MULTI[extension_R].header, MULTI[extension_R].data
+        head_hdu_G, data_hdu_G = MULTI[extension_G].header, MULTI[extension_G].data
+        head_hdu_B, data_hdu_B = MULTI[extension_B].header, MULTI[extension_B].data
+
+        wcs_R = WCS(head_hdu_R)
+        wcs_G = WCS(head_hdu_G)
+        wcs_B = WCS(head_hdu_B)
 
         MULTI.close()
 
-    image_R = F444W_data.copy()
-    image_G = F277W_data.copy()
-    image_B = F115W_data.copy()
+    image_R = data_hdu_R.copy()
+    image_G = data_hdu_G.copy()
+    image_B = data_hdu_B.copy()
 
     image_max = np.amax([np.amax(image_R), np.amax(image_G), np.amax(image_B)])
     image_min = np.amin([np.amin(image_R), np.amin(image_G), np.amin(image_B)])
@@ -3176,13 +3202,13 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None):
 
     if True:
 
-        pixel_scale = astropy.wcs.utils.proj_plane_pixel_scales(F444W_wcs)[0]*3600.0 # arcsec/pixel
+        pixel_scale = astropy.wcs.utils.proj_plane_pixel_scales(wcs_R)[0]*3600.0 # arcsec/pixel
 
     else:
 
-        pixel_scale = np.sqrt(np.square(F444W_wcs.wcs.cd[0, 0]) + np.square(F444W_wcs.wcs.cd[1, 0]))*3600.0 \
-            if hasattr(F444W_wcs.wcs, 'cd') and F444W_wcs.wcs.cd is not None \
-            else abs(F444W_wcs.wcs.cdelt[0])*3600.0 # arcsec/pixel
+        pixel_scale = np.sqrt(np.square(wcs_R.wcs.cd[0, 0]) + np.square(wcs_R.wcs.cd[1, 0]))*3600.0 \
+            if hasattr(wcs_R.wcs, 'cd') and wcs_R.wcs.cd is not None \
+            else abs(wcs_R.wcs.cdelt[0])*3600.0 # arcsec/pixel
 
     radius = 0.175/pixel_scale
 
@@ -3353,11 +3379,11 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None):
 
             ObsNumber = Coordinate[0][0]
 
-            coords_slit_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[1][0], Coordinate[1][1], frame=ICRS, unit='deg'))
-            coords_slit_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[2][0], Coordinate[2][1], frame=ICRS, unit='deg'))
+            coords_slit_Nod1 = wcs_R.world_to_pixel(SkyCoord(Coordinate[1][0], Coordinate[1][1], frame=ICRS, unit='deg'))
+            coords_slit_Nod2 = wcs_R.world_to_pixel(SkyCoord(Coordinate[2][0], Coordinate[2][1], frame=ICRS, unit='deg'))
 
-            coords_target_Nod1 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[3][0], Coordinate[3][1], frame=ICRS, unit='deg'))
-            coords_target_Nod2 = F444W_wcs.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
+            coords_target_Nod1 = wcs_R.world_to_pixel(SkyCoord(Coordinate[3][0], Coordinate[3][1], frame=ICRS, unit='deg'))
+            coords_target_Nod2 = wcs_R.world_to_pixel(SkyCoord(Coordinate[4][0], Coordinate[4][1], frame=ICRS, unit='deg'))
 
             ax.plot(coords_slit_Nod1[0].tolist(), coords_slit_Nod1[1].tolist(), 
                 color=temp_colors[2*i+0], ls='-', lw=4.5, alpha=0.8, label=fr'$\mathrm{{Obs{int(ObsNumber):02d},\,Nod1}}$', zorder=i)
