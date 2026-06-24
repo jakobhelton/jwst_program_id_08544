@@ -1962,7 +1962,10 @@ def extract_model_predictions(model, result, observations, stellarPopulationSynt
         theta_labels = np.array(theta_labels)
 
     array_smoothed_spectrum, array_predictions, array_mfrac = [], [], []
+
     array_U, array_B, array_V, array_R, array_I, array_J, array_H, array_K = [], [], [], [], [], [], [], []
+
+    dictionary_chebyshev_coefficients = {obs.name: [] for obs in observations if hasattr(obs, 'polynomial_order')}
 
     for i, theta in enumerate(result['chain']):
 
@@ -1981,6 +1984,12 @@ def extract_model_predictions(model, result, observations, stellarPopulationSynt
         try:
 
             predictions, mfrac = predict_Prospector(model, theta, observations, stellarPopulationSynthesis)
+
+            for observation in observations:
+
+                if hasattr(observation, '_chebyshev_coefficients'):
+
+                    dictionary_chebyshev_coefficients[observation.name].append(observation._chebyshev_coefficients.copy())
 
         except ValueError:
 
@@ -2038,8 +2047,9 @@ def extract_model_predictions(model, result, observations, stellarPopulationSynt
     mfrac = np.array(array_mfrac, dtype=float)
     predictions = np.array(array_predictions, dtype=object)
     smoothed_spectrum = np.array(array_smoothed_spectrum, dtype=float)
+    chebyshev_coefficients = dictionary_chebyshev_coefficients
 
-    return U, B, V, R, I, J, H, K, smoothed_spectrum, predictions, mfrac
+    return U, B, V, R, I, J, H, K, smoothed_spectrum, predictions, mfrac, chebyshev_coefficients
 
 ###
 
@@ -2415,11 +2425,11 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
 
     # Interprets the results...
 
-    U, B, V, R, I, J, H, K, smoothed_spectrum, predictions, mfrac = extract_model_predictions(
-        model, result, observations, stellarPopulationSynthesis)
-
     age, mass, sfr_10Myr, sfr_100Myr, ssfr_10Myr, ssfr_100Myr = measure_stellar_population_properties(
         sfh_type, result, chain, theta_labels)
+
+    U, B, V, R, I, J, H, K, smoothed_spectrum, predictions, mfrac, chebyshev_coefficients = extract_model_predictions(
+        model, result, observations, stellarPopulationSynthesis)
 
     EWs = derive_equivalent_widths(rest_wavelengths, smoothed_spectrum, line_type='Hb+O3', xmin=4800.0, xmax=5100.0)
 
@@ -2427,11 +2437,33 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
 
     # Saves the first set of results...
 
+    plain_observations = []
+
     for i, observation in enumerate(observations):
 
         if observation.kind == 'photometry':
 
+            plain_observations.append(observation)
+
             spec, phot = smoothed_spectrum, np.array([prediction for prediction in predictions[:, i]])
+
+        elif observation.kind == 'spectrum' and isinstance(observation, PolySpectrum):
+
+            plain_observation = Spectrum(
+                wavelength=observation.wavelength.copy(), flux=observation.flux.copy(), 
+                uncertainty=observation.uncertainty.copy(), mask=observation.mask.copy(),
+                resolution=observation.resolution.copy() if observation.resolution is not None else None,
+                response=observation.response.copy() if observation.response is not None else None,
+                name=observation.name,
+            )
+
+            plain_observation.redshift = observation.redshift
+
+            plain_observations.append(plain_observation)
+
+        else:
+
+            plain_observations.append(observation)
 
     spec_p16, spec_p50, spec_p84 = 1.0e+9*maggies_to_Jy*quantile(spec.T, q=q, weights=weights).T
     phot_p16, phot_p50, phot_p84 = 1.0e+9*maggies_to_Jy*quantile(phot.T, q=q, weights=weights).T
@@ -2445,10 +2477,11 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
     dictionary = {}
     dictionary['SFH'] = sfh_type
     dictionary['predictions'] = predictions
-    dictionary['observations'] = temp_observations # observations
+    dictionary['observations'] = plain_observations
     dictionary['model_photometry'] = [phot_p16, phot_p50, phot_p84]
     dictionary['model_spectroscopy'] = [spec_p16, spec_p50, spec_p84]
     dictionary['model_spectroscopy_wavelengths'] = rest_wavelengths*(1.0 + observations[0].redshift)
+    dictionary['model_chebyshev_coefficients'] = chebyshev_coefficients
     dictionary['model_parameters'] = [
         [r'$\mathrm{log}_{10}\left( M_{\ast}/M_{\odot} \right)$', StellarMass], 
         [r'$\mathrm{log}_{10}\left( Z_{\ast}/Z_{\odot} \right)$', StellarMetal], 
@@ -2512,7 +2545,9 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
     # Saves the fourth set of results...
 
     dictionary_Results = {}
+
     dictionary_Results['ID'] = 183348
+
     percentiles = quantile(chain.T, q=q, weights=weights)
 
     for label, percentile in zip(theta_labels, percentiles): 
