@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/23 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/24 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -52,8 +52,7 @@ the coordinate shifts, masks, and directory paths for your own program.
         'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Analysis/'), 
         'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs1_Spec2, asn_files_Obs1_Spec3], None (default)
-        'CoordinateShift': [+0.57851171, +1.61563086], # [+0.57851171, +1.61563086], None (default)
-        'ColumnsToMask': None, 'RowsToMask': None, # None, None (default)
+        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': None, # None (default)
     }
 
     os.makedirs(directories_Obs1['Spec2'], exist_ok=True)
@@ -85,8 +84,7 @@ the coordinate shifts, masks, and directory paths for your own program.
         'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Analysis/'), 
         'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs2_Spec2, asn_files_Obs2_Spec3], None (default)
-        'CoordinateShift': [+0.76080378, +1.66932663], # [+0.76080378, +1.66932663], None (default)
-        'ColumnsToMask': None, 'RowsToMask': None, # None, None (default)
+        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': None, # None (default)
     }
 
     os.makedirs(directories_Obs2['Spec2'], exist_ok=True)
@@ -118,8 +116,7 @@ the coordinate shifts, masks, and directory paths for your own program.
         'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Analysis/'), 
         'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs3_Spec2, asn_files_Obs3_Spec3], None (default)
-        'CoordinateShift': [+0.33483082, +1.88349722], # [+0.33483082, +1.88349722], None (default)
-        'ColumnsToMask': None, 'RowsToMask': [243, 244, 245, 281, 282, 283], # None, None (default)
+        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': [243, 244, 245, 281, 282, 283], # None (default)
     }
 
     os.makedirs(directories_Obs3['Spec2'], exist_ok=True)
@@ -151,8 +148,7 @@ the coordinate shifts, masks, and directory paths for your own program.
         'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Analysis/'), 
         'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Thumbnails/'), 
         'AssociationFiles': None, # [asn_files_Obs4_Spec2, asn_files_Obs4_Spec3], None (default)
-        'CoordinateShift': [+0.21278994, +1.49675700], # [+0.21278994, +1.49675700], None (default)
-        'ColumnsToMask': [9, 10, 11], 'RowsToMask': [281, 282, 283], # None, None (default)
+        'CoordinateShift': None, # None (default) 'ColumnsToMask': [9, 10, 11], 'RowsToMask': [281, 282, 283], # None (default)
     }
 
     os.makedirs(directories_Obs4['Spec2'], exist_ok=True)
@@ -171,7 +167,7 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     run_Stage1, run_Tweak, run_Stage2, run_Stage3 = True, True, True, True
 
-    sigma = 3.0; bkg_subtract_list = [True, False]; mask_trace_width = 5; extraction_type = 'optimal'
+    sigma = 3.0; bkg_subtract_list = [True, False]; bkg_subtract_iterative = False; mask_trace_width = 5; extraction_type = 'optimal'
 
     if run_Stage1:
 
@@ -196,23 +192,23 @@ the coordinate shifts, masks, and directory paths for your own program.
         if run_Stage2:
 
             helper.run_pipeline_full(directories_Obs1, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
-                offset=-1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=bkg_subtract_iterative, 
+                mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs2, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
-                offset=+1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=bkg_subtract_iterative, 
+                mask_trace_width=mask_trace_width, offset=+1.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs3, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
-                offset=+3.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=bkg_subtract_iterative, 
+                mask_trace_width=mask_trace_width, offset=+3.0, zred=14.1796, 
             )
 
             helper.run_pipeline_full(directories_Obs4, stage1=False, stage2=True, stage3=False, tweak=run_Tweak, sigma=sigma,
-                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=False, mask_trace_width=mask_trace_width, 
-                offset=-1.0, zred=14.1796, 
+                bkg_subtract_list=[bkg_subtract], bkg_subtract_iterative=bkg_subtract_iterative, 
+                mask_trace_width=mask_trace_width, offset=-1.0, zred=14.1796, 
             )
 
         if run_Stage3:
@@ -3102,7 +3098,7 @@ def tapered_column_extraction(extraction_width=3.0):
 
 ###
 
-def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=None):
+def plot_slit_overlay(directories, zred=14.1796, scalebar=True, filename_infix=None, filters=None):
 
     """
     Plots the MIRI/LRS slit footprints for each observation on an RGB false-color thumbnail.
@@ -3125,6 +3121,8 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=No
         List of dictionaries of directories
     zred : float
         Redshift used for calculating physical sizes from angular separations
+    scalebar : float
+        Whether or not to plot a scalebar with annotated physical and angular units
     filename_infix : str or None, optional
         Specifies which variant of the assign_wcs files to use when reading slit footprints
     filters : dict or None, optional
@@ -3167,7 +3165,8 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=No
 
             raise FileNotFoundError(f'No thumbnail file(s) found in {directories[0]['Thumbnails']!r}')
 
-        MULTI = fits.open(sorted(glob.glob(f'{directories[0]['Thumbnails']}/*.fits'))[0])
+        MULTI = fits.open([filename for filename in sorted(glob.glob(f'{directories[0]["Thumbnails"]}/*.fits'))
+            if 'cat' not in os.path.basename(filename)][0])
 
         extension_names = [hdu.name for hdu in MULTI]
 
@@ -3175,9 +3174,9 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=No
         extension_G = next((name for name in [f'{filter_G}-CLEAR', filter_G] if name in extension_names), None)
         extension_B = next((name for name in [f'{filter_B}-CLEAR', filter_B] if name in extension_names), None)
 
-        if extension_R is None: raise ValueError(f'Filter "{filter_R}" not found; available extensions: {extension_names}')
-        if extension_G is None: raise ValueError(f'Filter "{filter_G}" not found; available extensions: {extension_names}')
-        if extension_B is None: raise ValueError(f'Filter "{filter_B}" not found; available extensions: {extension_names}')
+        if extension_R is None: raise ValueError(f"Filter '{filter_R}' not found; available extensions: {extension_names}")
+        if extension_G is None: raise ValueError(f"Filter '{filter_G}' not found; available extensions: {extension_names}")
+        if extension_B is None: raise ValueError(f"Filter '{filter_B}' not found; available extensions: {extension_names}")
 
         head_hdu_R, data_hdu_R = MULTI[extension_R].header, MULTI[extension_R].data
         head_hdu_G, data_hdu_G = MULTI[extension_G].header, MULTI[extension_G].data
@@ -3395,27 +3394,27 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=No
             ax.plot(coords_target_Nod2[0].tolist(), coords_target_Nod2[1].tolist(), 
                 color='w', ls=' ', marker='x', ms=12, mew=4.5, alpha=0.8)
 
-    if True: fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
+    if False: fig.suptitle(r'\boldmath$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
     else: fig.suptitle(r'$\mathrm{JWST/NIRCam\ False-}\mathrm{Color\ RGB}$', x=0.515, y=0.945, fontsize=20)
 
     ax.set_xlabel(''); ax.set_ylabel('')
     ax.set_xticks([]); ax.set_yticks([])
 
-    width = 1.0
-
     if True:
 
-        dx, dy = +20.0, +20.0
+        width = +0.05/pixel_scale # +1.0
+
+        dx, dy = +1.0/pixel_scale, +1.0/pixel_scale # +20.0, +20.0
 
         ax.arrow(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=0.0, dy=+1.0*dy, 
-            width=width, head_width=3.0*width, head_length=3.0*width, color='w')
-        ax.arrow(0.948*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-1.0*dx, dy=0.0, 
-            width=width, head_width=3.0*width, head_length=3.0*width, color='w')
+            width=width, head_width=3.0*width, head_length=3.0*width, color='w', zorder=3)
+        ax.arrow(0.950*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, dx=-1.0*dx, dy=0.0, 
+            width=width, head_width=3.0*width, head_length=3.0*width, color='w', zorder=3)
 
         ax.text(0.948*(temp_xmax - temp_xmin) + temp_xmin - 1.33*dx, 0.0475*(temp_ymax - temp_ymin) + temp_ymin, 
-            r'\boldmath$\mathrm{E}$', fontsize=16, color='w', ha='center', va='center')
+            r'\boldmath$\mathrm{E}$', fontsize=16, color='w', ha='center', va='center', zorder=3)
         ax.text(0.945*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin + 1.31*dy, 
-            r'\boldmath$\mathrm{N}$', fontsize=16, color='w', ha='center', va='center')
+            r'\boldmath$\mathrm{N}$', fontsize=16, color='w', ha='center', va='center', zorder=3)
 
     if True: # Whether or not to plot a scalebar in the lower left of the image
 
@@ -3423,11 +3422,11 @@ def plot_slit_overlay(directories, zred=14.1796, filename_infix=None, filters=No
 
         ax.errorbar(0.20*(temp_xmax - temp_xmin) + temp_xmin, 0.05*(temp_ymax - temp_ymin) + temp_ymin, xerr=scalebar_half_pix, yerr=0,
             marker='none', markerfacecolor='none', markeredgecolor='none', 
-            color='w', lw=3, capsize=6.0, capthick=3.0)
+            color='w', lw=3, capsize=6.0, capthick=3.0, zorder=3)
 
         ax.text(0.20*(temp_xmax - temp_xmin) + temp_xmin, 0.15*(temp_ymax - temp_ymin) + temp_ymin, 
-            fr'\boldmath${scalebar_arcsec:.1f}^{{\prime\prime}}$', 
-            fontsize=16, color='w', ha='center', va='center')
+            fr'\boldmath${scalebar_arcsec:.1f}^{{\prime\prime}}$', fontsize=16, 
+            color='w', ha='center', va='center', zorder=3)
 
         if zred is not None:
 
@@ -4641,6 +4640,13 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             list_of_filenames = [filename_1, filename_2, filename_3, filename_4]
 
+            list_of_labels = [
+                r'$\mathrm{Custom\ Pipeline\ Using}\ \texttt{cal}\ \mathrm{Files}$', 
+                r'$\mathrm{Custom\ Pipeline\ Using}\ \texttt{s2d}\ \mathrm{Files}$', 
+                r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{cal}\ \mathrm{Files}$', 
+                r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{s2d}\ \mathrm{Files}$', 
+            ]
+
         except Exception:
 
             filename_3 = sorted(glob.glob(os.path.join(temp_pathname_2, '*_c1d.fits')))[0]
@@ -4648,12 +4654,10 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             list_of_filenames = [filename_3, filename_4]
 
-        list_of_labels = [
-            r'$\mathrm{Custom\ Pipeline\ Using}\ \texttt{cal}\ \mathrm{Files}$', 
-            r'$\mathrm{Custom\ Pipeline\ Using}\ \texttt{s2d}\ \mathrm{Files}$', 
-            r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{cal}\ \mathrm{Files}$', 
-            r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{s2d}\ \mathrm{Files}$', 
-        ]
+            list_of_labels = [
+                r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{cal}\ \mathrm{Files}$', 
+                r'$\mathrm{Default\ Pipeline\ Using}\ \texttt{s2d}\ \mathrm{Files}$', 
+            ]
 
         list_of_flux_data, list_of_wavelength_data, list_of_flux_error_data = [], [], []
 
@@ -4757,7 +4761,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             ax.xaxis.set_minor_locator(MultipleLocator(xstep))
             ax.yaxis.set_minor_locator(AutoMinorLocator(4))
 
-            xlabel = fr'$\mathrm{{Rest-Frame\ Wavelength}}\ \mathrm{{at}}\ z = {zred:.2f}'
+            xlabel = fr'$\mathrm{{Rest-}}\mathrm{{Frame\ Wavelength}}\ \mathrm{{at}}\ z = {zred:.2f}'
             xlabel += fr'\ \left[ \mathrm{{microns}} \right]$'
 
             ax_top = ax.twiny()
