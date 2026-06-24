@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/18 by Jakob M. Helton.
+The following Python script was last updated on 2026/06/24 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -849,7 +849,7 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
         if contains_miri_lrs:
 
             model_params['disp_corr_poly_0_miri_lrs'] = {
-                'name': 'dispersion_correction_polynomial_min_endpoint_miri_lrs', 
+                'name': 'dispersion_correction_polynomial_endpoint_min_miri_lrs', 
                 'units': None, 
                 'N': 1, 
                 'isfree': True, 
@@ -858,7 +858,7 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
             }
 
             model_params['disp_corr_poly_1_miri_lrs'] = {
-                'name': 'dispersion_correction_polynomial_max_endpoint_miri_lrs', 
+                'name': 'dispersion_correction_polynomial_endpoint_max_miri_lrs', 
                 'units': None, 
                 'N': 1, 
                 'isfree': True, 
@@ -1577,7 +1577,7 @@ def make_corner_plot(hfile, weights_new, table, xarray, smooth=+0.0, lw=2, nbins
         ax.tick_params(axis='both', which='major', direction='out', 
             bottom=True, top=False, left=True, right=False, length=3*lw, width=lw, labelsize=16)
         ax.tick_params(axis='both', which='minor', direction='out', 
-            bottom=True, top=False, left=True, right=False, length=2*lw, width=lw, labelsize=16)
+            bottom=False, top=False, left=False, right=False, length=2*lw, width=lw, labelsize=16)
 
         for axis in ['top','bottom','left','right']: 
 
@@ -1598,7 +1598,7 @@ def make_corner_plot(hfile, weights_new, table, xarray, smooth=+0.0, lw=2, nbins
                         temp_ax.tick_params(axis='both', which='major', direction='out', 
                             bottom=True, top=False, left=True, right=False, length=3*lw, width=2*lw, labelsize=16)
                         temp_ax.tick_params(axis='both', which='minor', direction='out', 
-                            bottom=True, top=False, left=True, right=False, length=2*lw, width=2*lw, labelsize=16)
+                            bottom=False, top=False, left=False, right=False, length=2*lw, width=2*lw, labelsize=16)
 
                         for axis in ['top','bottom','left','right']: 
 
@@ -2051,77 +2051,59 @@ def measure_stellar_population_properties(sfh_type, result, chain, theta_labels)
 
     if 'bursty' in sfh_type.lower() or 'continuity' in sfh_type.lower() or 'rising' in sfh_type.lower():
 
-        agebins = np.array(result['model_params']['agebins'])
+        agebins_init = np.array(result['model_params']['agebins'])
 
         sfr_indices = np.array([i for i, label in enumerate(theta_labels) if label[:6] == 'logsfr'])
         logmass = chain[:, np.where(theta_labels == 'logmass')[0][0]]
         logsfr_ratios = chain[:, sfr_indices]
 
-        N = agebins.shape[0]
-        ratios = np.power(10, np.clip(logsfr_ratios, -100, +100)).T
-        bins = (np.power(10, agebins[:, 1]) - np.power(10, agebins[:, 0]))
-        coeffs = [(1.0/np.prod(ratios[:i, :], axis=0))*(np.prod(bins[1:i+1])/np.prod(bins[:i])) for i in range(N)]
-        m1 = np.power(10, logmass)/np.array(coeffs).sum(axis=0)
-        masses = m1*np.array(coeffs)
-        sfrs = masses.T/bins.T
+        N = agebins_init.shape[0]
 
-        age = 0.5*(np.power(10, agebins)[:, 1] + np.power(10, agebins)[:, 0])
-        age = np.sum(age*masses.T, axis=1)
-        age /= np.power(10, logmass)
+        if len(np.where(theta_labels == 'tbirth')[0]) > 0:
 
-        for index, agebin in enumerate(np.unique(agebins.flatten())[1:]): 
+            tbirth_index = np.where(theta_labels == 'tbirth')[0][0]
 
-            if index == 0:
+            if len(np.where(theta_labels == 'zred')[0]) > 0:
 
-                temp_agebin = np.power(10, agebin)
-
-                if temp_agebin >= 1e+7:
-
-                    sfr_10Myr = sfrs[:, index]; break
-
-                else:
-
-                    sfr_10Myr = sfrs[:, index]*(temp_agebin)/1e+7
+                zred_index = np.where(theta_labels == 'zred')[0][0]
 
             else:
 
-                temp_temp_agebin = temp_agebin
-                temp_agebin = np.power(10, agebin)
+                zred = float(np.squeeze(result['model_params']['zred']))
 
-                if temp_agebin >= 1e+7:
+        age = np.zeros(len(chain))
+        sfr_10Myr = np.zeros(len(chain))
+        sfr_100Myr = np.zeros(len(chain))
 
-                    sfr_10Myr += sfrs[:, index]*(1e+7 - temp_temp_agebin)/1e+7; break
+        for sample_index in range(len(chain)):
 
-                else:
+            if len(np.where(theta_labels == 'tbirth')[0]) > 0:
 
-                    sfr_10Myr += sfrs[:, index]*(temp_agebin - temp_temp_agebin)/1e+7
+                zred = chain[sample_index, zred_index] if len(np.where(theta_labels == 'zred')[0]) > 0 else zred
 
-        for index, agebin in enumerate(np.unique(agebins.flatten())[1:]): 
-
-            if index == 0:
-
-                temp_agebin = np.power(10, agebin)
-
-                if temp_agebin >= 1e+8:
-
-                    sfr_100Myr = sfrs[:, index]; break
-
-                else:
-
-                    sfr_100Myr = sfrs[:, index]*(temp_agebin)/1e+8
+                agebins = transform_zred_to_agebins(zred, chain[sample_index, tbirth_index])
 
             else:
 
-                temp_temp_agebin = temp_agebin
-                temp_agebin = np.power(10, agebin)
+                agebins = agebins_init
 
-                if temp_agebin >= 1e+8:
+            bins = (np.power(10, agebins[:, 1]) - np.power(10, agebins[:, 0]))
+            ratios = np.power(10, np.clip(logsfr_ratios[sample_index], -100, +100))
+            coeffs = [(1.0/np.prod(ratios[:i]))*(np.prod(bins[1:i+1])/np.prod(bins[:i])) for i in range(N)]
+            m1 = np.power(10, logmass[sample_index])/np.array(coeffs).sum(axis=0)
+            masses = m1*np.array(coeffs)
+            sfrs = masses/bins
 
-                    sfr_100Myr += sfrs[:, index]*(1e+8 - temp_temp_agebin)/1e+8; break
+            agebins_lin = np.power(10, agebins)
+            sample_age = (agebins_lin[:, 1] + agebins_lin[:, 0])/2.0
+            age[sample_index] = np.sum(sample_age*masses)/np.power(10, logmass[sample_index])
 
-                else:
+            bin_upper = agebins_lin[:, 1]
+            bin_lower = np.concatenate([[0.0], bin_upper[:-1]])
+            sample_sfr_10Myr = np.sum(sfrs*np.maximum(0.0, np.minimum(bin_upper, 1e+7) - bin_lower))/1e+7
+            sample_sfr_100Myr = np.sum(sfrs*np.maximum(0.0, np.minimum(bin_upper, 1e+8) - bin_lower))/1e+8
 
-                    sfr_100Myr += sfrs[:, index]*(temp_agebin - temp_temp_agebin)/1e+8
+            sfr_10Myr[sample_index] = sample_sfr_10Myr; sfr_100Myr[sample_index] = sample_sfr_100Myr
 
         age = np.array(age)
         sfr_10Myr = np.array(sfr_10Myr); ssfr_10Myr = sfr_10Myr/np.power(10, logmass)
@@ -2250,33 +2232,52 @@ def measure_star_formation_history(sfh_type, result, chain, theta_labels, lookba
 
     if 'bursty' in sfh_type.lower() or 'continuity' in sfh_type.lower() or 'rising' in sfh_type.lower():
 
-        agebins = np.array(result['model_params']['agebins'])
+        agebins_init = np.array(result['model_params']['agebins'])
 
         sfr_indices = np.array([i for i, label in enumerate(theta_labels) if label[:6] == 'logsfr'])
         logmass = chain[:, np.where(theta_labels == 'logmass')[0][0]]
         logsfr_ratios = chain[:, sfr_indices]
 
-        N = agebins.shape[0]
-        ratios = np.power(10, np.clip(logsfr_ratios, -100, +100)).T
-        bins = (np.power(10, agebins[:, 1]) - np.power(10, agebins[:, 0]))
-        coeffs = [(1.0/np.prod(ratios[:i, :], axis=0))*(np.prod(bins[1:i+1])/np.prod(bins[:i])) for i in range(N)]
-        m1 = np.power(10, logmass)/np.array(coeffs).sum(axis=0)
-        masses = m1*np.array(coeffs)
-        sfrs = masses.T/bins.T
+        N = agebins_init.shape[0]
 
-        sfhs = []
+        if len(np.where(theta_labels == 'tbirth')[0]) > 0:
 
-        for index, lookback_time in enumerate(lookback_times):
+            tbirth_index = np.where(theta_labels == 'tbirth')[0][0]
 
-            try:
+            if len(np.where(theta_labels == 'zred')[0]) > 0:
 
-                sfhs.append(sfrs.T[np.where(lookback_time <= np.power(10, agebins))[0][0]])
+                zred_index = np.where(theta_labels == 'zred')[0][0]
 
-            except IndexError:
+            else:
 
-                sfhs.append(np.zeros(sfrs.shape[0]))
+                zred = float(np.squeeze(result['model_params']['zred']))
 
-        return lookback_times, np.array(sfhs)
+        sfhs = np.zeros((len(chain), len(lookback_times)))
+
+        for sample_index in range(len(chain)):
+
+            if len(np.where(theta_labels == 'tbirth')[0]) > 0:
+
+                zred = chain[sample_index, zred_index] if len(np.where(theta_labels == 'zred')[0]) > 0 else zred
+
+                agebins = transform_zred_to_agebins(zred, chain[sample_index, tbirth_index])
+
+            else:
+
+                agebins = agebins_init
+
+            bins = (np.power(10, agebins[:, 1]) - np.power(10, agebins[:, 0]))
+            ratios = np.power(10, np.clip(logsfr_ratios[sample_index], -100, +100))
+            coeffs = [(1.0/np.prod(ratios[:i]))*(np.prod(bins[1:i+1])/np.prod(bins[:i])) for i in range(N)]
+            m1 = np.power(10, logmass[sample_index])/np.array(coeffs).sum(axis=0)
+            masses = m1*np.array(coeffs)
+            sfrs = masses/bins
+
+            agebins_lin = np.power(10, agebins)
+            bin_indices = np.searchsorted(agebins_lin[:, 1], lookback_times, side='left')
+            sfhs[sample_index, :] = np.where(bin_indices < N, sfrs[np.minimum(bin_indices, N-1)], 0.0)
+
+        return lookback_times, np.array(sfhs).T
 
     # Measures properties of the stellar populations for the parametric delayed-tau model
 
@@ -2444,7 +2445,7 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
     dictionary = {}
     dictionary['SFH'] = sfh_type
     dictionary['predictions'] = predictions
-    dictionary['observations'] = observations
+    dictionary['observations'] = temp_observations # observations
     dictionary['model_photometry'] = [phot_p16, phot_p50, phot_p84]
     dictionary['model_spectroscopy'] = [spec_p16, spec_p50, spec_p84]
     dictionary['model_spectroscopy_wavelengths'] = rest_wavelengths*(1.0 + observations[0].redshift)
