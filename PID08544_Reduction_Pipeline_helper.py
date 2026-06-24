@@ -965,15 +965,15 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
 
             if datamodel.meta.wcsinfo.cdelt1 is not None:
 
-                pixscale = 3600.0*datamodel.meta.wcsinfo.cdelt1
+                PIX2ARC = 3600.0*datamodel.meta.wcsinfo.cdelt1
 
             else:
 
-                pixscale = np.sqrt(0.01217199)
+                PIX2ARC = np.sqrt(0.01217199)
 
             positions = [(x, y) for x, y in zip(catalog['xcentroid_win'], catalog['ycentroid_win'])]
 
-            aperture = CircularAperture(positions, r=aperture_radius/pixscale)
+            aperture = CircularAperture(positions, r=aperture_radius/PIX2ARC)
 
             phot_table = aperture_photometry(image, aperture, error=bkg.background_rms)
 
@@ -1092,14 +1092,12 @@ def tweak_reference_coordinates(filenames, coordinate_shift, offset_additional=(
     filenames : list of str
         Paths to rate FITS files to modify (the function writes new files, does not overwrite originals).
     coordinate_shift : tuple (dx, dy)
-        Shift in pixels to apply to V2 and V3 (will be converted to arcsec using 0.11 arcsec/pixel).
+        Shift in pixels to apply to V2 and V3 (will be converted to arcsec using JWST/MIRI's pixel scale).
     offset_additional : tuple (ox, oy), optional
         Additional offset (pixels) to add to the shift before converting to arcsec.
     write_suffix : str, optional
         Suffix used for the written filename (default: '_tweak_rate.fits').
     """
-
-    PIX2ARC = +0.11 # arcseconds/pixel for JWST/MIRI
 
     for filename in filenames:
 
@@ -1110,6 +1108,16 @@ def tweak_reference_coordinates(filenames, coordinate_shift, offset_additional=(
             # Read the filename via datamodels to get meta.wcsinfo if present
 
             datamodel = datamodels.open(filename)
+
+            # Defines the pixel scale (arcseconds/pixel) for JWST/MIRI
+
+            if datamodel.meta.wcsinfo.cdelt1 is not None:
+
+                PIX2ARC = 3600.0*datamodel.meta.wcsinfo.cdelt1
+
+            else:
+
+                PIX2ARC = np.sqrt(0.01217199)
 
             # Sets up conversion functions
 
