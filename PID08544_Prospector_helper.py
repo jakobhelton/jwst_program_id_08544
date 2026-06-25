@@ -1414,7 +1414,7 @@ def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03, show=True):
     plotdim = factor*sz + factor*(sz - 1)*whspace
     dim = lbdim + plotdim + trdim
 
-    fig, axes = plt.subplots(nx, ny, figsize=(dim[1], dim[0]), sharex=True)
+    fig, axes = plt.subplots(nx, ny, figsize=(dim[1], dim[0]), sharex=True, layout='constrained')
 
     axes = np.atleast_2d(axes)
 
@@ -1478,7 +1478,7 @@ def make_trace_plot(hfile, burn_in=1e-2, lw=2, y_value_label=1.03, show=True):
 
     # Saves the trace plot figure
 
-    plt.subplots_adjust(hspace=0.25, wspace=0.25)
+    if False: plt.subplots_adjust(hspace=0.25, wspace=0.25)
 
     plt.savefig(f'{hfile.replace(".h5", "/Trace_Plot")}.pdf', dpi=300, bbox_inches='tight')
     plt.savefig(f'{hfile.replace(".h5", "/Trace_Plot")}.png', dpi=300, bbox_inches='tight')
@@ -2447,7 +2447,7 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
 
             spec, phot = smoothed_spectrum, np.array([prediction for prediction in predictions[:, i]])
 
-        elif observation.kind == 'spectrum' and isinstance(observation, PolySpectrum):
+        elif observation.kind == 'spectrum' and hasattr(observation, 'polynomial_order'):
 
             plain_observation = Spectrum(
                 wavelength=observation.wavelength.copy(), flux=observation.flux.copy(), 
@@ -2480,7 +2480,7 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
     dictionary['observations'] = plain_observations
     dictionary['model_photometry'] = [phot_p16, phot_p50, phot_p84]
     dictionary['model_spectroscopy'] = [spec_p16, spec_p50, spec_p84]
-    dictionary['model_spectroscopy_wavelengths'] = rest_wavelengths*(1.0 + observations[0].redshift)
+    dictionary['model_spectroscopy_wavelengths'] = rest_wavelengths*(1.0 + plain_observations[0].redshift)
     dictionary['model_chebyshev_coefficients'] = chebyshev_coefficients
     dictionary['model_parameters'] = [
         [r'$\mathrm{log}_{10}\left( M_{\ast}/M_{\odot} \right)$', StellarMass], 
