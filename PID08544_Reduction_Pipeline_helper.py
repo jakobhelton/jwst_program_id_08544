@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/06/24 by Jakob M. Helton.
+The following Python script was last updated on 2026/07/06 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -33,135 +33,121 @@ the coordinate shifts, masks, and directory paths for your own program.
 
     import PID08544_Reduction_Pipeline_helper as helper # Imports all helper functions
 
-    asn_files_suffix = 'asn_clean.json' # Defines association file suffix
-
-    # Obs1
-
-    asn_files_Obs1 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs1/MAST/', f'*_{asn_files_suffix}')))
-    asn_files_Obs1_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs1 if 'spec2' in asn_file][::-1]
-    asn_files_Obs1_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs1 if 'spec3' in asn_file]
+    # Observation1
 
     directories_Obs1 = {
-        'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Thumbnails/'), 
-        'AssociationFiles': None, # [asn_files_Obs1_Spec2, asn_files_Obs1_Spec3], None (default)
-        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': None, # None (default)
+        'Base': os.path.normpath(f'{pathname_reductions}'),
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/'),
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/MAST/'),
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Uncal/'),
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage1/'),
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage2/'),
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Stage3/'),
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Analysis/'),
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs1/Thumbnails/'),
+        'AssociationFiles': None, # None (default)
+        'CoordinateShift': None, # None (default)
+        'ColumnsToMask': None, # None (default)
+        'RowsToMask': None, # None (default)
     }
+
+    os.makedirs(directories_Obs1['Det1'], exist_ok=True)
 
     os.makedirs(directories_Obs1['Spec2'], exist_ok=True)
     os.makedirs(directories_Obs1['Spec3'], exist_ok=True)
 
-    for asn_file in asn_files_Obs1_Spec2: shutil.copy(asn_file, directories_Obs1['Spec2'])
-    for asn_file in asn_files_Obs1_Spec3: shutil.copy(asn_file, directories_Obs1['Spec3'])
-
     os.makedirs(directories_Obs1['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'), exist_ok=True)
     os.makedirs(directories_Obs1['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'), exist_ok=True)
 
-    for asn_file in asn_files_Obs1_Spec2: shutil.copy(asn_file, directories_Obs1['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'))
-    for asn_file in asn_files_Obs1_Spec3: shutil.copy(asn_file, directories_Obs1['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'))
+    os.makedirs(directories_Obs1['Analysis'], exist_ok=True)
 
-    # Obs2
+    # Observation2
 
     asn_files_Obs2 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs2/MAST/', f'*_{asn_files_suffix}')))
     asn_files_Obs2_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs2 if 'spec2' in asn_file][::-1]
     asn_files_Obs2_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs2 if 'spec3' in asn_file]
 
     directories_Obs2 = {
-        'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Thumbnails/'), 
-        'AssociationFiles': None, # [asn_files_Obs2_Spec2, asn_files_Obs2_Spec3], None (default)
-        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': None, # None (default)
+        'Base': os.path.normpath(f'{pathname_reductions}'),
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/'),
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/MAST/'),
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Uncal/'),
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage1/'),
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage2/'),
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Stage3/'),
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Analysis/'),
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs2/Thumbnails/'),
+        'AssociationFiles': None, # None (default)
+        'CoordinateShift': None, # None (default)
+        'ColumnsToMask': None, # None (default)
+        'RowsToMask': None, # None (default)
     }
+
+    os.makedirs(directories_Obs2['Det1'], exist_ok=True)
 
     os.makedirs(directories_Obs2['Spec2'], exist_ok=True)
     os.makedirs(directories_Obs2['Spec3'], exist_ok=True)
 
-    for asn_file in asn_files_Obs2_Spec2: shutil.copy(asn_file, directories_Obs2['Spec2'])
-    for asn_file in asn_files_Obs2_Spec3: shutil.copy(asn_file, directories_Obs2['Spec3'])
-
     os.makedirs(directories_Obs2['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'), exist_ok=True)
     os.makedirs(directories_Obs2['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'), exist_ok=True)
 
-    for asn_file in asn_files_Obs2_Spec2: shutil.copy(asn_file, directories_Obs2['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'))
-    for asn_file in asn_files_Obs2_Spec3: shutil.copy(asn_file, directories_Obs2['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'))
+    os.makedirs(directories_Obs2['Analysis'], exist_ok=True)
 
-    # Obs3
-
-    asn_files_Obs3 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs3/MAST/', f'*_{asn_files_suffix}')))
-    asn_files_Obs3_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs3 if 'spec2' in asn_file][::-1]
-    asn_files_Obs3_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs3 if 'spec3' in asn_file]
+    # Observation3
 
     directories_Obs3 = {
-        'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Thumbnails/'), 
-        'AssociationFiles': None, # [asn_files_Obs3_Spec2, asn_files_Obs3_Spec3], None (default)
-        'CoordinateShift': None, # None (default) 'ColumnsToMask': None, 'RowsToMask': [243, 244, 245, 281, 282, 283], # None (default)
+        'Base': os.path.normpath(f'{pathname_reductions}'),
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/'),
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/MAST/'),
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Uncal/'),
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage1/'),
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage2/'),
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Stage3/'),
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Analysis/'),
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs3/Thumbnails/'),
+        'AssociationFiles': None, # None (default)
+        'CoordinateShift': None, # None (default)
+        'ColumnsToMask': None, # None (default)
+        'RowsToMask': [243, 244, 245, 281, 282, 283], # None (default)
     }
+
+    os.makedirs(directories_Obs3['Det1'], exist_ok=True)
 
     os.makedirs(directories_Obs3['Spec2'], exist_ok=True)
     os.makedirs(directories_Obs3['Spec3'], exist_ok=True)
 
-    for asn_file in asn_files_Obs3_Spec2: shutil.copy(asn_file, directories_Obs3['Spec2'])
-    for asn_file in asn_files_Obs3_Spec3: shutil.copy(asn_file, directories_Obs3['Spec3'])
-
     os.makedirs(directories_Obs3['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'), exist_ok=True)
     os.makedirs(directories_Obs3['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'), exist_ok=True)
 
-    for asn_file in asn_files_Obs3_Spec2: shutil.copy(asn_file, directories_Obs3['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'))
-    for asn_file in asn_files_Obs3_Spec3: shutil.copy(asn_file, directories_Obs3['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'))
+    os.makedirs(directories_Obs3['Analysis'], exist_ok=True)
 
-    # Obs4
-
-    asn_files_Obs4 = sorted(glob.glob(os.path.join(f'{pathname_reductions}/PID08544_Obs4/MAST/', f'*_{asn_files_suffix}')))
-    asn_files_Obs4_Spec2 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs4 if 'spec2' in asn_file][::-1]
-    asn_files_Obs4_Spec3 = [os.path.normpath(asn_file) for asn_file in asn_files_Obs4 if 'spec3' in asn_file]
+    # Observation4
 
     directories_Obs4 = {
-        'Base': os.path.normpath(f'{pathname_reductions}'), 
-        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/'), 
-        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/MAST/'), 
-        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Uncal/'), 
-        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage1/'), 
-        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage2/'), 
-        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage3/'), 
-        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Analysis/'), 
-        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Thumbnails/'), 
-        'AssociationFiles': None, # [asn_files_Obs4_Spec2, asn_files_Obs4_Spec3], None (default)
-        'CoordinateShift': None, # None (default) 'ColumnsToMask': [9, 10, 11], 'RowsToMask': [281, 282, 283], # None (default)
+        'Base': os.path.normpath(f'{pathname_reductions}'),
+        'Obs': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/'),
+        'MAST': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/MAST/'),
+        'Uncal': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Uncal/'),
+        'Det1': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage1/'),
+        'Spec2': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage2/'),
+        'Spec3': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Stage3/'),
+        'Analysis': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Analysis/'),
+        'Thumbnails': os.path.normpath(f'{pathname_reductions}/PID08544_Obs4/Thumbnails/'),
+        'AssociationFiles': None, # None (default)
+        'CoordinateShift': None, # None (default)
+        'ColumnsToMask': [9, 10, 11], # None (default)
+        'RowsToMask': [281, 282, 283], # None (default)
     }
+
+    os.makedirs(directories_Obs4['Det1'], exist_ok=True)
 
     os.makedirs(directories_Obs4['Spec2'], exist_ok=True)
     os.makedirs(directories_Obs4['Spec3'], exist_ok=True)
 
-    for asn_file in asn_files_Obs4_Spec2: shutil.copy(asn_file, directories_Obs4['Spec2'])
-    for asn_file in asn_files_Obs4_Spec3: shutil.copy(asn_file, directories_Obs4['Spec3'])
-
     os.makedirs(directories_Obs4['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'), exist_ok=True)
     os.makedirs(directories_Obs4['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'), exist_ok=True)
 
-    for asn_file in asn_files_Obs4_Spec2: shutil.copy(asn_file, directories_Obs4['Spec2'].replace('Stage2', 'Default_Pipeline_Stage2'))
-    for asn_file in asn_files_Obs4_Spec3: shutil.copy(asn_file, directories_Obs4['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3'))
+    os.makedirs(directories_Obs4['Analysis'], exist_ok=True)
 
     # Runs the full (or partial) pipeline for each set of observations
 
@@ -929,7 +915,7 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
 
         try:
 
-            print(f'Calculating shift {i+1}/{len(filenames_vi_i2d)}: {os.path.basename(filename)}')
+            print(f'Calculating shift {i+1}/{len(filenames_vi_i2d)}: {os.path.basename(filename)}'); print()
 
             datamodel = datamodels.open(filename)
 
@@ -3978,7 +3964,7 @@ def create_level3_association(pathname, filenames, suffix='association.json'):
 
 # https://jwst-pipeline.readthedocs.io/en/latest/jwst/pipeline/calwebb_spec3.html
 
-def run_spec3_pipeline(pathname, association_file, extraction_type='optimal', resample_spec=False, sigma=3.0, offset=+1.0):
+def run_spec3_pipeline(pathname, association_file, extraction_type='optimal', resample_spec=False, sigma=3.0, offset=+0.0):
 
     """
     Run the Spec3 pipeline on Level 3 association.
@@ -4264,7 +4250,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
             for filename in filenames_assign_wcs: 
 
-                trace_location, y_plot, source_offset = find_trace(filename, verbose=False)
+                trace_location, y_plot, source_offset = find_trace(filename, verbose=True)
 
                 trace_locations.append(trace_location); source_offsets.append(source_offset)
 
@@ -4348,9 +4334,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                 inspect_spectra(None, filenames, None, ellipses=True, zred=zred, 
                     offset=offset, position_nod1=position_nod1, position_nod2=position_nod2)
 
-            # Loop through the list of file names for s2d files
-
-            if not bkg_subtract:
+                # Loop through the list of file names for s2d files
 
                 for i in [0, 1]:
 
@@ -4448,7 +4432,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     # Inspect the background subtracted s2d files
 
-                    filenames_bsub = filenames
+                    filenames_bsub = filenames; filenames_cal = filenames
 
                     bkg_dict = {'box_size':(3, 3), 'filter_size':(3, 3), 'sigma':sigma}
 
@@ -4524,11 +4508,16 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                         if len(obs_numbers) > 1:
 
-                            association_inputs = [(filenames_cal, 'All_association.json')]
+                            association_inputs = [
+                                (filenames_cal, 'All_association.json'),
+                            ]
 
                         else:
 
-                            association_inputs = [(filenames_cal, f'Obs{next(iter(obs_numbers)):03d}_association.json')]
+                            association_inputs = [
+                                (filenames_cal, f'Obs{next(iter(obs_numbers)):03d}_association.json'),
+                                (filenames_cal, 'All_association.json'),
+                            ]
 
                     level3_association_files = [create_level3_association(None, filenames, 
                         suffix=suffix) for filenames, suffix in association_inputs]
@@ -4536,11 +4525,6 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                 else:
 
                     level3_association_files = [(directories['AssociationFiles'][1][0], 'association.json')]
-
-                # Cleans the cal files produced by Stage 2 of the pipeline with sigma clipping
-
-                clean_cal_files(filenames_cal, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
-                    columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
 
             else:
 
@@ -4583,30 +4567,30 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
                     if len(obs_numbers) > 1:
 
-                        association_inputs = [(filenames_bsub, 'All_combined_association.json')]
+                        association_inputs = [
+                            (filenames_bsub, 'All_combined_association.json'),
+                        ]
 
                     else:
 
-                        association_inputs = [(filenames_bsub, f'Obs{next(iter(obs_numbers)):03d}_combined_association.json')]
+                        association_inputs = [
+                            (filenames_bsub, f'Obs{next(iter(obs_numbers)):03d}_combined_association.json'),
+                            (filenames_bsub, 'All_combined_association.json'),
+                        ]
 
                 level3_association_files = [create_level3_association(None, filenames, 
                     suffix=suffix) for filenames, suffix in association_inputs]
 
-                # Cleans the bsub files produced by Stage 2 of the pipeline with sigma clipping
-
-                clean_cal_files(filenames_bsub, sigma_lower_threshold=sigma, sigma_upper_threshold=sigma,
-                    columns_to_mask=directories['ColumnsToMask'], rows_to_mask=directories['RowsToMask'], mask_trace_width=mask_trace_width)
-
             # Runs Stage 3 of the JWST pipeline, once using the s2d files and another time using the cal files
-            # Jake prefers working with the s2d files while Jane prefers working with the cal files
+            # Jake prefers working with the s2d files whereas Jane prefers working with the cal files
 
-            if bkg_subtract: 
+            if bkg_subtract:
 
                 temp_pathname = directories['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3')
 
                 if not os.path.exists(temp_pathname): os.mkdir(temp_pathname)
 
-            else: 
+            else:
 
                 temp_pathname = directories['Spec3']
 
@@ -4635,7 +4619,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
             inspect_spectra(temp_pathname, filenames_s2d, filenames_c1d, zred=zred, colorbar='SNR') # Options include 'SB' and 'SNR'
             inspect_spectra(temp_pathname, filenames_s2d, filenames_x1d, zred=zred, colorbar='SNR') # Options include 'SB' and 'SNR'
 
-        # Create figure to compare fluxes and errors for the different reductions of the 1D spectra
+        # Create figure to compare fluxes and errors for different reductions of 1D spectra (x1d versus c1d; bkg_subtract = True versus False)
 
         temp_pathname_1, temp_pathname_2 = directories['Spec3'], directories['Spec3'].replace('Stage3', 'Default_Pipeline_Stage3')
 
