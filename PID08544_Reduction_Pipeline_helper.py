@@ -1311,24 +1311,36 @@ def clean_rate_files(pathname, filenames, sigma_lower_threshold=3.0, sigma_upper
 
     try:
 
-        temp_filename = filenames[0]
+        with datamodels.open(filenames[0]) as temp_datamodel:
 
-        exposures_per_nod = len(filenames) // 2
+            integrations_per_exposure = temp_datamodel.meta.exposure.nints
 
-        if 'tweak' in temp_filename: filename_rateints = temp_filename.replace('_tweak_rate.fits', '_rateints.fits')
-        else: filename_rateints = temp_filename.replace('_rate.fits', '_rateints.fits')
+    except Exception as e:
 
-        with datamodels.open(filename_rateints) as temp_datamodel: 
+        raise RuntimeError(
+            f'Could not read integrations_per_exposure from {filenames[0]}: {e}\n'
+            f'Ensure the file exists and is a valid JWST rate file datamodel.'
+        )
 
-            integrations_per_exposure = temp_datamodel.shape[0]
+    # Group files by dither position number read from the datamodel header
+    # position_number is 1-indexed; total_points gives the number of nod positions
 
-    except Exception:
+    nod_position_by_file = {}
 
-        exposures_per_nod, integrations_per_exposure = 4, 23
+    for temp_filename in filenames:
 
-        # Four exposures per nod position per visit; 23 integrations per exposure for PID08544
+        with datamodels.open(temp_filename) as temp_datamodel:
 
-    for temp_filenames in [filenames[0::2], filenames[1::2]]:
+            nod_position_by_file[temp_filename] = temp_datamodel.meta.dither.position_number
+
+    nod_groups = [
+        [filename for filename in filenames if nod_position_by_file[filename] == nod_position]
+        for nod_position in sorted(set(nod_position_by_file.values()))
+    ]
+
+    for temp_filenames in nod_groups:
+
+        exposures_per_nod = len(temp_filenames)
 
         cutout_dq = np.zeros((ysize, xsize, exposures_per_nod, integrations_per_exposure), dtype=int)
         cutout_data = np.zeros((ysize, xsize, exposures_per_nod, integrations_per_exposure))
@@ -1357,13 +1369,13 @@ def clean_rate_files(pathname, filenames, sigma_lower_threshold=3.0, sigma_upper
 
             datamodel = datamodels.open(filename_rateints)
 
-            number_of_ints = datamodel.shape[0]
-
             temp_dq = datamodel.dq.copy()
             temp_data = datamodel.data.copy()
             temp_error = datamodel.err.copy()
             temp_var_rnoise = datamodel.var_rnoise.copy()
             temp_var_poisson = datamodel.var_poisson.copy()
+
+            number_of_ints = datamodel.meta.exposure.nints
 
             datamodel.close()
 
@@ -2589,15 +2601,23 @@ def clean_cal_files(filenames, sigma_lower_threshold=3.0, sigma_upper_threshold=
 
     cutouts_data = np.zeros((ysize, xsize, len(filenames)))
 
+    nod_position_by_file = {}
+
+    for temp_filename in filenames:
+
+        with datamodels.open(temp_filename) as temp_datamodel:
+
+            nod_position_by_file[temp_filename] = temp_datamodel.meta.dither.position_number
+
     if is_bsub:
 
-        filenames_assign_wcs_nod1 = filenames[0::2]
-        filenames_assign_wcs_nod2 = filenames[1::2]
+        filenames_assign_wcs_nod1 = [filename for filename in filenames if nod_position_by_file[filename] == 1]
+        filenames_assign_wcs_nod2 = [filename for filename in filenames if nod_position_by_file[filename] == 2]
 
     else:
 
-        filenames_assign_wcs_nod1 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[0::2]]
-        filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
+        filenames_assign_wcs_nod1 = [f.replace('_cal.fits', '_assign_wcs.fits') for f in filenames if nod_position_by_file[f] == 1]
+        filenames_assign_wcs_nod2 = [f.replace('_cal.fits', '_assign_wcs.fits') for f in filenames if nod_position_by_file[f] == 2]
 
     position_nod1, position_nod2 = get_nod_positions_from_wcs(filenames_assign_wcs_nod1, filenames_assign_wcs_nod2, verbose=True)
 
@@ -2848,15 +2868,23 @@ def subtract_background_iterative(filenames, box_sizes=[(9, 3), (3, 9), (3, 3)],
 
     is_bsub = all('_bsub_combined.fits' in filename for filename in filenames)
 
+    nod_position_by_file = {}
+
+    for temp_filename in filenames:
+
+        with datamodels.open(temp_filename) as temp_datamodel:
+
+            nod_position_by_file[temp_filename] = temp_datamodel.meta.dither.position_number
+
     if is_bsub:
 
-        filenames_assign_wcs_nod1 = filenames[0::2]
-        filenames_assign_wcs_nod2 = filenames[1::2]
+        filenames_assign_wcs_nod1 = [filename for filename in filenames if nod_position_by_file[filename] == 1]
+        filenames_assign_wcs_nod2 = [filename for filename in filenames if nod_position_by_file[filename] == 2]
 
     else:
 
-        filenames_assign_wcs_nod1 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[0::2]]
-        filenames_assign_wcs_nod2 = [filename.replace('_cal.fits', '_assign_wcs.fits') for filename in filenames[1::2]]
+        filenames_assign_wcs_nod1 = [f.replace('_cal.fits', '_assign_wcs.fits') for f in filenames if nod_position_by_file[f] == 1]
+        filenames_assign_wcs_nod2 = [f.replace('_cal.fits', '_assign_wcs.fits') for f in filenames if nod_position_by_file[f] == 2]
 
     position_nod1, position_nod2 = get_nod_positions_from_wcs(filenames_assign_wcs_nod1, filenames_assign_wcs_nod2, verbose=True)
 
