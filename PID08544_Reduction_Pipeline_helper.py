@@ -3,7 +3,7 @@
 PID08544 Reduction Pipeline Helper
 ===================================
 
-The following Python script was last updated on 2026/07/06 by Jakob M. Helton.
+The following Python script was last updated on 2026/07/07 by Jakob M. Helton.
 Helper functions for reducing MIRI/LRS spectroscopy for PID08544 (JADES-GS-z14-0).
 Covers Detector1 (Stage 1), Spec2 (Stage 2), and Spec3 (Stage 3) pipeline steps,
 plus nod subtraction, bad-pixel cleaning, trace finding, optimal extraction,
@@ -880,7 +880,10 @@ def calculate_coordinate_shift(directories, subtract_bkg=True, detect_nsigma=2.5
 
             hdu = fits.open(filename_rate)
 
-            hdu[0].header['EXP_TYPE'] = 'MIR_TACONFIRM'
+            hdu[0].header['EXP_TYPE'] = 'MIR_IMAGE'
+
+            # EXP_TYPE must be MIR_IMAGE (not MIR_TACONFIRM) so that assign_wcs builds an imager WCS
+            # MIR_TACONFIRM triggers a spectroscopic WCS that blocks the resample step, preventing i2d output
 
             hdu.writeto(filename_rate, overwrite=True)
 
@@ -4134,11 +4137,13 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
 
     # Inspect the full images from the rate files produced by Stage 1 of the pipeline
 
+    exp_type_tuple_skip = ('MIR_TACQ', 'MIR_TACONFIRM', 'MIR_IMAGE')
+
     filenames_rates = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rate.fits')))
     filenames_rateints = sorted(glob.glob(os.path.join(directories['Det1'], '*_mirimage_rateints.fits')))
 
-    filenames_rates = [filename for filename in filenames_rates if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
-    filenames_rateints = [filename for filename in filenames_rateints if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
+    filenames_rates = [filename for filename in filenames_rates if get_file_type(filename) not in exp_type_tuple_skip]
+    filenames_rateints = [filename for filename in filenames_rateints if get_file_type(filename) not in exp_type_tuple_skip]
 
     if tweak:
 
@@ -4154,7 +4159,7 @@ def run_pipeline_full(directories, stage1=True, stage2=True, stage3=True, tweak=
                 offset_additional=(+0.0, +0.0), write_suffix='_tweak_rate.fits')
 
             filenames_rates = [filename for filename in sorted(glob.glob(os.path.join(directories['Det1'], 
-                '*_mirimage_tweak_rate.fits'))) if get_file_type(filename) not in ('MIR_TACQ', 'MIR_TACONFIRM')]
+                '*_mirimage_tweak_rate.fits'))) if get_file_type(filename) not in exp_type_tuple_skip]
 
             temp_filename_infix = 'mirimage_tweak_clean'
 
