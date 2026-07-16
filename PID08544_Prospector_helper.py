@@ -42,7 +42,7 @@ history type, and redshift for your own target.
 
     filename_phot = 'catalogs/catalog_183348.csv' # Defines the photometric catalog
 
-    observations = helper.build_observations(filename_spec, filename_phot, index_phot=0, maximumSNR=20.0)
+    observations = helper.build_observations(filename_spec, filename_phot, index_phot=0, maximumSNR=20.0, use_cue=True)
 
     # Builds the Prospector model for the target galaxy assuming a non-parametric rising star formation history
 
@@ -337,14 +337,23 @@ print(StellarPopulations.libraries)
 sps_CSPSpecBasis = CSPSpecBasis(zcontinuous=1)
 sps_FastStepBasis = FastStepBasis(zcontinuous=1)
 
-fsps_emlines_file = os.path.join(os.environ.get('SPS_HOME', ''), 'data', 'emlines_info.dat')
-fsps_emlines_rest_wavelength_Angstroms = np.loadtxt(fsps_emlines_file, delimiter=',', usecols=0)
+fsps_emlines_file = os.path.join(
+    os.environ.get('SPS_HOME', ''), 'data', 'emlines_info.dat')
+fsps_emlines_names = np.loadtxt(fsps_emlines_file, delimiter=',', dtype='str', usecols=1)
+fsps_emlines_rest_wavelength_Angstroms = np.loadtxt(fsps_emlines_file, delimiter=',', dtype='float', usecols=0)
 
 if ___CUE_AVAILABLE___:
 
     from pkg_resources import resource_filename
 
-    cue_emlines_rest_wavelength_Angstroms = np.genfromtxt(resource_filename('cuejax', 'data/cue_emlines_info.dat'),
+    sps_NebCSPSpecBasis = NebCSPBasis(zcontinuous=1, cue_kwargs={})
+    sps_NebFastStepBasis = NebStepBasis(zcontinuous=1, cue_kwargs={})
+
+    cue_emlines_file = resource_filename(
+        'cuejax', 'data/cue_emlines_info.dat')
+    cue_emlines_names = np.genfromtxt(cue_emlines_file, 
+        dtype=[('wave', 'f8'), ('name', '<U20')], delimiter=',')['name']
+    cue_emlines_rest_wavelength_Angstroms = np.genfromtxt(cue_emlines_file, 
         dtype=[('wave', 'f8'), ('name', '<U20')], delimiter=',')['wave']
 
 maggies_to_Jy = 3631.0
@@ -732,7 +741,7 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
     if not lyman_alpha:
 
-        if '2.0' not in prosp.__version__: 
+        if '2.0' not in prosp.__version__ and not use_cue: 
 
             model_params['elines_to_ignore'] = {
                 'name': 'emission_lines_to_ignore', 
@@ -747,8 +756,8 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
                 'name': 'emission_lines_to_ignore', 
                 'N': 1, 
                 'isfree': False, 
-                'init': ['Ly-7 926', 'Ly-6 930', 'Ly-5 937', 'Ly-delta 949.749A', 'Ly-gamma 972', 'Ly-beta 1025', 
-                    'He II 1084.94A', 'He II 1215.13A', 'Ly-alpha 1215'], # Prospector v2.0
+                'init': ['Ly-8 923', 'Ly-7 926', 'Ly-6 930', 'Ly-5 937', 
+                    'Ly-delta 949.749A', 'Ly-gamma 972', 'Ly-beta 1025', 'Ly-alpha 1215'], # Prospector v2.0
             }
 
     # Change damping wing and IGM parameters in model_params dictionary
@@ -1206,7 +1215,7 @@ def get_stellarPopulationSynthesis_Parametric():
 
     # Returns the stellar population synthesis object
 
-    return sps_CSPSpecBasis
+    return CSPSpecBasis(zcontinuous=1)
 
 # Defines and builds stellar population synthesis object for non-parametric SFHs
 
@@ -1214,7 +1223,7 @@ def get_stellarPopulationSynthesis_NonParametric():
 
     # Returns the stellar population synthesis object
 
-    return sps_FastStepBasis
+    return FastStepBasis(zcontinuous=1)
 
 # Defines and builds Cue-based stellar population synthesis object for parametric SFHs
 
@@ -1236,7 +1245,7 @@ def get_stellarPopulationSynthesis_NonParametric_Cue(cue_kwargs={}):
 
 # Defines function for reading in the observations
 
-def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0, polynomial_order=2):
+def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0, polynomial_order=2, use_cue=False):
 
     # Input Data for Spectrum Observations Object (same units on flux for Photometry Observations Object)
     # resolution : Instrumental resolution at each wavelength point in units of km/s
@@ -1412,10 +1421,21 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
     # Includes the emission line and continuum constraints from ALMA
 
+    emlines_names_for_ALMA = cue_emlines_names if use_cue else fsps_emlines_names
+    emlines_wavelength_for_ALMA = cue_emlines_rest_wavelength_Angstroms if use_cue else fsps_emlines_rest_wavelength_Angstroms
+
+    line_indices_ALMA = np.atleast_1d(np.where(emlines_names_for_ALMA == 'O III 88.3323um')[0])
+
+    if line_indices_ALMA.size == 0:
+
+        raise ValueError(
+            f'Could not find "O III 88.3323um" in the emission line list (use_cue={use_cue}); '
+            'check that the emission line data file naming convention has not changed.'
+        )
+
     flux_ALMA = np.atleast_1d((2.75e-19*u.erg/u.s/np.square(u.cm)).value)
     uncertainty_ALMA = np.atleast_1d((0.52e-19*u.erg/u.s/np.square(u.cm)).value)
-    wavelengths_ALMA = np.atleast_1d(((1.0 + df.iloc[index_phot]['zSpec'])*88.35771*u.um).to('AA').value)
-    line_indices_ALMA = np.atleast_1d(159)
+    wavelengths_ALMA = np.atleast_1d((1.0 + df.iloc[index_phot]['zSpec'])*emlines_wavelength_for_ALMA[line_indices_ALMA[0]])
 
     observed_data_ALMA = Lines(flux=flux_ALMA, unc=uncertainty_ALMA, wavelength=wavelengths_ALMA, resolution=None, 
         mask=np.ones_like(wavelengths_ALMA, dtype=bool), line_ind=line_indices_ALMA, name='ALMA emission line fluxes')
