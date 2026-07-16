@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/06/24 by Jakob M. Helton.
+The following Python script was last updated on 2026/07/16 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -48,11 +48,13 @@ history type, and redshift for your own target.
 
     sfh_type = 'Rising' # Options: 'BurstyContinuity', 'Continuity', 'Constant', 'DelayedTau', 'Rising'
 
+    cue_ionizing_source = 'stellar' # Options: 'free', 'stellar'
+
     model = helper.build_model_Prospector(observations,
         sfh_type, observations[0].redshift, zerr=0.7e-3, zbirth=None, zmax=15.0, zmin=13.0,
-        nbins=6, scale=1.0, alpha=0.8, imf_type='Chabrier', imf_lower=0.08, imf_upper=120.0, decouple_metallicity=True,
-        two_component_dust=True, gas_logu=True, escape_fraction=True, damping_wing=True, igm_factor=False,
-        lyman_alpha=False,
+        nbins=6, scale=1.0, alpha=0.8, imf_type='Chabrier', imf_lower=0.08, imf_upper=120.0, two_component_dust=True,
+        decouple_metallicity=True, gas_logu=True, use_cue=True, cue_ionizing_source=cue_ionizing_source,
+        escape_fraction=False, damping_wing=True, igm_factor=False, lyman_alpha=False,
     )
 
     # Defines the relevant run parameters dictionary
@@ -83,11 +85,11 @@ history type, and redshift for your own target.
 
     # Retrieves the stellar population synthesis object appropriate for the chosen SFH type
 
-    stellarPopulationSynthesis = helper.get_stellarPopulationSynthesis_NonParametric()
+    stellarPopulationSynthesis = helper.get_stellarPopulationSynthesis_NonParametric_Cue()
 
     # Runs the dynesty nested sampler and writes the output HDF5 file
 
-    hfile = f'h5/GSz14_{sfh_type}SFH_dynesty_v0.h5'
+    hfile = f'h5/GSz14_Cue_{sfh_type}SFH_dynesty_v0.h5'
 
     fitted_model = fit_model(observations, model, stellarPopulationSynthesis, lnprobfn=lnprobfn, **run_params)
 
@@ -305,6 +307,22 @@ class PolySpectrum(PolyOptCal, Spectrum):
 
 ###
 
+# Imports Prospector's Cue-based nebular emission support, if the prospector_cue environment is being used
+# This whole block is optional: build_model_Prospector() falls back to FSPS's native nebular emission 
+# (use_cue=False) in any environment where these are not installed
+
+try:
+
+    from prospect.sources.nebssp_basis import NebStepBasis, NebCSPBasis
+
+    ___CUE_AVAILABLE___ = True
+
+except ImportError:
+
+    ___CUE_AVAILABLE___ = False
+
+###
+
 # Testing fsps and Prospector v2 imports
 
 print(f'Prospector pathname: {prosp.__path__}')
@@ -322,6 +340,13 @@ sps_FastStepBasis = FastStepBasis(zcontinuous=1)
 fsps_emlines_file = os.path.join(os.environ.get('SPS_HOME', ''), 'data', 'emlines_info.dat')
 fsps_emlines_rest_wavelength_Angstroms = np.loadtxt(fsps_emlines_file, delimiter=',', usecols=0)
 
+if ___CUE_AVAILABLE___:
+
+    from pkg_resources import resource_filename
+
+    cue_emlines_rest_wavelength_Angstroms = np.genfromtxt(resource_filename('cuejax', 'data/cue_emlines_info.dat'),
+        dtype=[('wave', 'f8'), ('name', '<U20')], delimiter=',')['wave']
+
 maggies_to_Jy = 3631.0
 
 ###
@@ -330,9 +355,10 @@ maggies_to_Jy = 3631.0
 # Defines and builds model based on the methodology of Carniani et al. (2025)
 # Relevant Reference: https://www.scixplorer.org/abs/2025A&A...696A..87C/abstract
 
-def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0, zmax=20.0, zmin=0.0, nbins=6, scale=1.0, alpha=0.8, 
-    imf_type='Chabrier', imf_lower=0.08, imf_upper=120.0, decouple_metallicity=True, two_component_dust=True, 
-    gas_logu=True, escape_fraction=True, damping_wing=True, igm_factor=True, lyman_alpha=True):
+def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0, zmax=20.0, zmin=0.0, nbins=6, scale=1.0, alpha=0.8,
+    imf_type='Chabrier', imf_lower=0.08, imf_upper=120.0, two_component_dust=True, decouple_metallicity=True,
+    gas_logu=True, use_cue=False, cue_ionizing_source='stellar', escape_fraction=True,
+    damping_wing=True, igm_factor=True, lyman_alpha=True):
 
     # Creates list of the available sfh_types
 
@@ -541,7 +567,7 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
         'N': 1, 
         'isfree': True, 
         'init': -1.0, 
-        'prior': priors.TopHat(mini=-2.0, maxi=0.0), # priors.ClippedNormal(mean=-1.0, sigma=0.5, mini=-2.0, maxi=0.0), 
+        'prior': priors.TopHat(mini=-2.0, maxi=0.5), # priors.ClippedNormal(mean=-1.0, sigma=0.5, mini=-2.0, maxi=0.0), 
     }
 
     # Change redshift parameters in the model_params dictionary
@@ -642,7 +668,15 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
     # Change nebular parameters in model_params dictionary
 
-    model_params.update(TemplateLibrary['nebular'])
+    if use_cue:
+
+        if cue_ionizing_source == 'stellar': model_params.update(TemplateLibrary['cue_stellar_nebular'])
+        elif cue_ionizing_source == 'free': model_params.update(TemplateLibrary['cue_nebular'])
+        else: raise ValueError('cue_ionizing_source must be "stellar" or "free".')
+
+    else:
+
+        model_params.update(TemplateLibrary['nebular'])
 
     if decouple_metallicity:
 
@@ -674,6 +708,17 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
         'init': -2.0, 
         'prior': priors.TopHat(mini=-4.0, maxi=-1.0), 
     }
+
+    if use_cue:
+
+        model_params['gas_lognH'] = {
+            'name': 'nebular_number_density', 
+            'units': 1.0/np.power(u.cm, 3), 
+            'N': 1, 
+            'isfree': True, 
+            'init': +2.5, 
+            'prior': priors.TopHat(mini=+1.0, maxi=+4.0), 
+        }
 
     model_params['nebemlineinspec'] = { # This has the added benefit of allowing the fsps calls to be faster!
         'name': 'include_emission_lines_fsps', 
@@ -749,7 +794,7 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
     # Creates new parameters in model_params dictionary
 
-    if escape_fraction: 
+    if escape_fraction and not use_cue: 
 
         model_params['frac_obrun'] = {
             'name': 'escape_fraction', 
@@ -759,6 +804,10 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
             'init': 0.0, 
             'prior': priors.ClippedNormal(mean=0.0, sigma=0.5, mini=0.0, maxi=1.0), 
         }
+
+    elif escape_fraction and use_cue:
+
+        raise ValueError('escape_fraction (frac_obrun) has no effect in Cue nebular mode; set escape_fraction=False.')
 
     # Change spectral calibration parameters in model_params dictionary
 
@@ -786,17 +835,34 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
             'init': 0.0, 
             'prior': priors.TopHat(mini=-1e-1, maxi=+1e-1), 
         }
-        
+
         if contains_nirspec and contains_miri_lrs:
 
-            model_params['eline_sigma'] = {
-                'name': 'emission_line_velocity_dispersion', 
-                'units': u.km/u.s, 
-                'N': len(fsps_emlines_rest_wavelength_Angstroms), 
-                'isfree': False, 
-                'init': 1e+2*np.ones(len(fsps_emlines_rest_wavelength_Angstroms)), 
-                'depends_on': transform_eline_sigma_across_instruments_with_wavelength_dependence,
-            }
+            if use_cue:
+
+                N_cue = len(cue_emlines_rest_wavelength_Angstroms)
+
+                model_params['eline_sigma'] = {
+                    'name': 'emission_line_velocity_dispersion', 
+                    'units': u.km/u.s, 
+                    'N': N_cue, 
+                    'isfree': False, 
+                    'init': 1e+2*np.ones(N_cue), 
+                    'depends_on': transform_eline_sigma_across_instruments_with_wavelength_dependence_cue,
+                }
+
+            else:
+
+                N_fsps = len(fsps_emlines_rest_wavelength_Angstroms)
+
+                model_params['eline_sigma'] = {
+                    'name': 'emission_line_velocity_dispersion', 
+                    'units': u.km/u.s, 
+                    'N': N_fsps, 
+                    'isfree': False, 
+                    'init': 1e+2*np.ones(N_fsps), 
+                    'depends_on': transform_eline_sigma_across_instruments_with_wavelength_dependence,
+                }
 
             model_params['eline_sigma_nirspec'] = {
                 'name': 'emission_line_velocity_dispersion_intrinsic', 
@@ -1046,11 +1112,14 @@ def transform_tbirth_to_zbirth(zred, tbirth, **dictionary_for_extras):
 
 # Defines function for splitting emission line velocity dispersions across different instruments
 
-def transform_eline_sigma_across_instruments(zred=0.0, eline_sigma_nirspec=100.0, eline_sigma_miri_lrs=100.0, 
+def transform_eline_sigma_across_instruments(zred=0.0, eline_sigma_nirspec=100.0, eline_sigma_miri_lrs=100.0,
     pivot_wavelength_microns=5.3, **dictionary_for_extras):
 
     # This is relevant for allowing the emission line velocity dispersion to be different across different instruments
     # We want to accurately model the spectrophotometric calibration of the spectrum across the full wavelength range
+
+    # Retained for potential future use only -- currently unused by build_model_Prospector, which instead uses the
+    # wavelength-dependent version defined below; Kept in case we need to revert to this simpler pivot-based version
 
     obs_wavelength_microns = fsps_emlines_rest_wavelength_Angstroms*(1.0 + zred)/1e+4
     nirspec_sigma = np.atleast_1d(eline_sigma_nirspec)[0]
@@ -1058,9 +1127,11 @@ def transform_eline_sigma_across_instruments(zred=0.0, eline_sigma_nirspec=100.0
 
     return np.where(obs_wavelength_microns < pivot_wavelength_microns, nirspec_sigma, miri_sigma)
 
-def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0, eline_sigma_nirspec=100.0,
-    disp_corr_poly_0_miri_lrs=1.0, disp_corr_poly_1_miri_lrs=1.0, minimum_wavelength_microns_miri_lrs=5.3,
-    maximum_wavelength_microns_miri_lrs=10.3, **dictionary_for_extras):
+def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0,
+    eline_sigma_nirspec=100.0, disp_corr_poly_0_miri_lrs=1.0, disp_corr_poly_1_miri_lrs=1.0,
+    minimum_wavelength_microns_miri_lrs=5.3, maximum_wavelength_microns_miri_lrs=10.3,
+    emline_wavelengths_rest_Angstroms=fsps_emlines_rest_wavelength_Angstroms,
+    **dictionary_for_extras):
 
     # This is relevant for allowing the emission line velocity dispersion to be different across different instruments
     # We want to accurately model the spectrophotometric calibration of the spectrum across the full wavelength range
@@ -1068,7 +1139,13 @@ def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0
     # The dispersion profile of the MIRI/LRS is corrected by multiplying by a wavelength-dependent linear polynomial
     # This corrections addresses potential issues with wavelength dependence of the instrumental resolution
 
-    obs_wavelength_microns = fsps_emlines_rest_wavelength_Angstroms*(1.0 + zred)/1e+4
+    # The emline_wavelengths_rest_Angstroms default (FSPS's 166-line list) is overridden by the thin
+    # transform_eline_sigma_across_instruments_with_wavelength_dependence_cue wrapper below (Cue's 138-line list)
+    # eline_sigma_nirspec is not a free model parameter here, but use_cue is not either, so the wavelength array
+    # must be selected by which of these two functions is assigned to depends_on when the model is built, not 
+    # decided dynamically inside the function -- see build_model_Prospector's eline_sigma_transform choice
+
+    obs_wavelength_microns = emline_wavelengths_rest_Angstroms*(1.0 + zred)/1e+4
     nirspec_sigma = np.atleast_1d(eline_sigma_nirspec)[0]
 
     resolution_miri_lrs = -73.1 + 20.0*obs_wavelength_microns
@@ -1095,6 +1172,24 @@ def transform_eline_sigma_across_instruments_with_wavelength_dependence(zred=0.0
 
     return np.where(condition, nirspec_sigma, miri_sigma)
 
+def transform_eline_sigma_across_instruments_with_wavelength_dependence_cue(zred=0.0,
+    eline_sigma_nirspec=100.0, disp_corr_poly_0_miri_lrs=1.0, disp_corr_poly_1_miri_lrs=1.0,
+    minimum_wavelength_microns_miri_lrs=5.3, maximum_wavelength_microns_miri_lrs=10.3,
+    **dictionary_for_extras):
+
+    # Thin wrapper around transform_eline_sigma_across_instruments_with_wavelength_dependence, passing Cue's
+    # 138-line emission-line wavelength array instead of FSPS's 166-line default
+
+    return transform_eline_sigma_across_instruments_with_wavelength_dependence(
+        zred=zred,
+        eline_sigma_nirspec=eline_sigma_nirspec,
+        disp_corr_poly_0_miri_lrs=disp_corr_poly_0_miri_lrs,
+        disp_corr_poly_1_miri_lrs=disp_corr_poly_1_miri_lrs,
+        minimum_wavelength_microns_miri_lrs=minimum_wavelength_microns_miri_lrs,
+        maximum_wavelength_microns_miri_lrs=maximum_wavelength_microns_miri_lrs,
+        emline_wavelengths_rest_Angstroms=cue_emlines_rest_wavelength_Angstroms,
+    )
+
 ###
 
 # Defines helper function for including damped Lyman-alpha absorption
@@ -1105,6 +1200,14 @@ def zred_to_dla_redshift(zred=None, **extras):
 
 ###
 
+# Defines and builds stellar population synthesis object for parametric SFHs
+
+def get_stellarPopulationSynthesis_Parametric():
+
+    # Returns the stellar population synthesis object
+
+    return sps_CSPSpecBasis
+
 # Defines and builds stellar population synthesis object for non-parametric SFHs
 
 def get_stellarPopulationSynthesis_NonParametric():
@@ -1113,15 +1216,21 @@ def get_stellarPopulationSynthesis_NonParametric():
 
     return sps_FastStepBasis
 
-###
+# Defines and builds Cue-based stellar population synthesis object for parametric SFHs
 
-# Defines and builds stellar population synthesis object for parametric SFHs
+def get_stellarPopulationSynthesis_Parametric_Cue(cue_kwargs={}):
 
-def get_stellarPopulationSynthesis_Parametric():
+    # Returns the Cue-based stellar population synthesis object
 
-    # Returns the stellar population synthesis object
+    return NebCSPBasis(zcontinuous=1, cue_kwargs=cue_kwargs)
 
-    return sps_CSPSpecBasis
+# Defines and builds Cue-based stellar population synthesis object for non-parametric SFHs
+
+def get_stellarPopulationSynthesis_NonParametric_Cue(cue_kwargs={}):
+
+    # Returns the Cue-based stellar population synthesis object
+
+    return NebStepBasis(zcontinuous=1, cue_kwargs=cue_kwargs)
 
 ###
 
@@ -2478,8 +2587,8 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
     dictionary['SFH'] = sfh_type
     dictionary['predictions'] = predictions
     dictionary['observations'] = plain_observations
-    dictionary['model_photometry'] = [phot_p16, phot_p50, phot_p84]
-    dictionary['model_spectroscopy'] = [spec_p16, spec_p50, spec_p84]
+    dictionary['model_photometry'] = np.array([phot_p16, phot_p50, phot_p84])
+    dictionary['model_spectroscopy'] = np.array([spec_p16, spec_p50, spec_p84])
     dictionary['model_spectroscopy_wavelengths'] = rest_wavelengths*(1.0 + plain_observations[0].redshift)
     dictionary['model_chebyshev_coefficients'] = chebyshev_coefficients
     dictionary['model_parameters'] = [
