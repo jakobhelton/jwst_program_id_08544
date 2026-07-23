@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/07/16 by Jakob M. Helton.
+The following Python script was last updated on 2026/07/23 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -90,6 +90,9 @@ history type, and redshift for your own target.
     # Runs the dynesty nested sampler and writes the output HDF5 file
 
     hfile = f'h5/GSz14_Cue_{sfh_type}SFH_dynesty_v0.h5'
+
+    run_params['checkpoint_every'] = 60 # Defines checkpointing cadence (every 60 seconds)
+    run_params['checkpoint_file'] = hfile.replace('.h5', '.checkpoint') # Defines checkpointing output file
 
     fitted_model = fit_model(observations, model, stellarPopulationSynthesis, lnprobfn=lnprobfn, **run_params)
 
@@ -201,6 +204,8 @@ import seaborn as sns
 
 import astropy, matplotlib, scipy, sedpy, corner
 
+from scipy.special import logsumexp
+
 from astropy.io import fits
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
@@ -273,6 +278,53 @@ twomass_K = sedpy.observate.Filter(kname='twomass_Ks')
 # Defines filename for the dispersion profile of NIRSpec/PRISM
 
 dispersion_profile_filename = 'jwst_nirspec_prism_disp.fits'
+
+# Defines filenames for the dispersion profiles of NIRSpec/PRISM and NIRSpec/Gratings from the JWST User Documentation webpage
+
+# Reference: https://jwst-docs.stsci.edu/jwst-near-infrared-spectrograph/nirspec-instrumentation/nirspec-dispersers-and-filters
+
+nirspec_gratings_all = ['prism', 'g140m', 'g140h', 'g235m', 'g235h', 'g395m', 'g395h']
+
+dispersion_profile_filename_prism = 'jwst_nirspec_prism_disp.fits'
+
+dispersion_profile_filename_g140m = 'jwst_nirspec_g140m_disp.fits'
+dispersion_profile_filename_g140h = 'jwst_nirspec_g140h_disp.fits'
+
+dispersion_profile_filename_g235m = 'jwst_nirspec_g235m_disp.fits'
+dispersion_profile_filename_g235h = 'jwst_nirspec_g235h_disp.fits'
+
+dispersion_profile_filename_g395m = 'jwst_nirspec_g395m_disp.fits'
+dispersion_profile_filename_g395h = 'jwst_nirspec_g395h_disp.fits'
+
+# Defines other filenames for the dispersion profile of NIRSpec/Gratings
+
+# Reference: https://www.scixplorer.org/abs/2025A%26A...702L..12S/abstract
+# GitHub Repository: https://github.com/ajshajib/nirspec_resolution/tree/main
+
+shajib_2025_dispersion_profile_filename_g140m = 'shajib_2025_jwst_nirspec_g140m_disp.fits'
+shajib_2025_dispersion_profile_filename_g140h = 'shajib_2025_jwst_nirspec_g140h_disp.fits'
+
+shajib_2025_dispersion_profile_filename_g235m = 'shajib_2025_jwst_nirspec_g235m_disp.fits'
+shajib_2025_dispersion_profile_filename_g235h = 'shajib_2025_jwst_nirspec_g235h_disp.fits'
+
+shajib_2025_dispersion_profile_filename_g395m = 'shajib_2025_jwst_nirspec_g395m_disp.fits'
+shajib_2025_dispersion_profile_filename_g395h = 'shajib_2025_jwst_nirspec_g395h_disp.fits'
+
+dispersion_profile_filenames = {
+    'prism': dispersion_profile_filename_prism,
+    'g140m': shajib_2025_dispersion_profile_filename_g140m,
+    'g140h': shajib_2025_dispersion_profile_filename_g140h,
+    'g235m': shajib_2025_dispersion_profile_filename_g235m,
+    'g235h': shajib_2025_dispersion_profile_filename_g235h,
+    'g395m': shajib_2025_dispersion_profile_filename_g395m,
+    'g395h': shajib_2025_dispersion_profile_filename_g395h,
+}
+
+# Defines function for returning dispersion profile filenames
+
+def _return_dispersion_profile_filenames_():
+
+    return dispersion_profile_filenames
 
 # Imports fsps, Prospector v2, and necessary Prospector functions
 
@@ -2536,17 +2588,15 @@ def build_results(hfile, sfh_type, model, observations, stellarPopulationSynthes
 
     theta_labels, chain = determine_theta_labels_and_chain(result)
 
-    temp_weights = result.get('weights', None)
+    # `result['weights']` from older h5 files can be exp(log_weight) computed
+    # without subtracting the evidence, which overflows to inf for the
+    # dominant high-likelihood samples. Recompute properly-normalized
+    # importance weights from `lnweights` (log_weight) instead, which is
+    # always finite and gives each sample its correct relative weight
+    # (rather than approximating with equal weights across the inf-valued samples).
 
-    if np.isinf(np.sum(temp_weights)):
-
-        weights = np.ones_like(temp_weights, dtype=float)
-        weights[~np.isinf(temp_weights)] = 0.0
-        weights /= np.sum(weights)
-
-    else:
-
-        weights = temp_weights
+    lnweights = result.get('lnweights', None)
+    weights = np.exp(lnweights - logsumexp(lnweights))
 
     rest_wavelengths = stellarPopulationSynthesis.wavelengths
 
