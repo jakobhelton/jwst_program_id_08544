@@ -954,31 +954,51 @@ def build_model_Prospector(observations, sfh_type, zred, zerr=None, zbirth=20.0,
 
         if contains_nirspec:
 
-            model_params['f_outlier_nirspec'] = {
-                'name': 'pixel_outlier_fraction_nirspec', 
-                'units': None, 
-                'N': 1, 
-                'isfree': True, 
-                'init': 0.0, 
-                'prior': priors.TopHat(mini=0.0, maxi=0.1), 
-            }
+            nirspec_gratings = []
 
-            model_params['nsigma_outlier_nirspec'] = {
-                'name': 'nsigma_outlier_deviation_nirspec', 
-                'units': None, 
-                'N': 1, 
-                'isfree': False, 
-                'init': 10.0, 
-            }
+            for name in observation_names:
 
-            model_params['spec_jitter_nirspec'] = {
-                'name': 'spectroscopic_noise_inflation_term_nirspec', 
-                'units': None, 
-                'N': 1, 
-                'isfree': True, 
-                'init': 1.0, 
-                'prior': priors.TopHat(mini=1.0, maxi=np.power(10, 1.0)), 
-            }
+                if 'nirspec' in name.lower():
+
+                    if np.any([grating in name.lower() for grating in nirspec_gratings_all]):
+
+                        for grating in nirspec_gratings_all:
+
+                            if grating in name.lower():
+
+                                nirspec_gratings.append(grating); break
+
+                    else:
+
+                        nirspec_gratings.append('prism')
+
+            for nirspec_grating in nirspec_gratings:
+
+                model_params[f'f_outlier_nirspec_{nirspec_grating.lower()}'] = {
+                    'name': 'pixel_outlier_fraction_nirspec', 
+                    'units': None, 
+                    'N': 1, 
+                    'isfree': True, 
+                    'init': 0.0, 
+                    'prior': priors.TopHat(mini=0.0, maxi=0.1), 
+                }
+
+                model_params[f'nsigma_outlier_nirspec_{nirspec_grating.lower()}'] = {
+                    'name': 'nsigma_outlier_deviation_nirspec', 
+                    'units': None, 
+                    'N': 1, 
+                    'isfree': False, 
+                    'init': 10.0, 
+                }
+
+                model_params[f'spec_jitter_nirspec_{nirspec_grating.lower()}'] = {
+                    'name': 'spectroscopic_noise_inflation_term_nirspec', 
+                    'units': None, 
+                    'N': 1, 
+                    'isfree': True, 
+                    'init': 1.0, 
+                    'prior': priors.TopHat(mini=1.0, maxi=np.power(10, 1.0)), 
+                }
 
         if contains_miri_lrs:
 
