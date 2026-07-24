@@ -47,7 +47,8 @@ history type, and redshift for your own target.
 
     filename_phot = 'catalogs/catalog_183348.csv' # Defines the photometric catalog
 
-    observations = helper.build_observations(filename_spec, filename_phot, index_phot=0, maximumSNR=20.0, use_cue=True)
+    observations = helper.build_observations(index_phot=0, filename_phot=filename_phot, filename_spec=filename_spec,
+        filename_line=None, maximumSNR=20.0, use_cue=True)
 
     # Builds the Prospector model for the target galaxy assuming a non-parametric rising star formation history
 
@@ -1498,7 +1499,8 @@ def _smooth_nirspec_to_library_resolution_(wavelengths_nirspec, flux_nirspec, un
 
 # Defines function for reading in the observations
 
-def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0, polynomial_order=2, use_cue=False):
+def build_observations(index_phot, filename_phot, filename_spec=None, filename_line=None, maximumSNR=20.0,
+    lambda_pad_Angstroms=1e+2, polynomial_order=2, use_cue=False):
 
     # Input Data for Spectrum Observations Object (same units on flux for Photometry Observations Object)
     # resolution : Instrumental resolution at each wavelength point in units of km/s
@@ -1555,8 +1557,6 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
     # Reads in the file(s) containing the spectroscopic observations
     # filename_spec is a (filename, grating) tuple, or a list of such tuples; grating is either
     # one of nirspec_gratings_all (for JWST/NIRSpec) or 'miri_lrs' (for JWST/MIRI LRS slit spectroscopy)
-
-    lambda_pad_Angstroms = 1e+2
 
     if filename_spec is not None:
 
@@ -1707,7 +1707,8 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
         observed_data_nirspec_list, observed_data_miri_lrs = [], None
 
-    # Includes the emission line and continuum constraints from ALMA
+    # Includes the fixed ALMA [O III] 88um emission line flux/continuum measurement, and any
+    # additional emission line flux measurements from filename_line, in one combined Lines observation
 
     emlines_names_for_ALMA = cue_emlines_names if use_cue else fsps_emlines_names
     emlines_wavelength_for_ALMA = cue_emlines_rest_wavelength_Angstroms if use_cue else fsps_emlines_rest_wavelength_Angstroms
@@ -1721,12 +1722,115 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
             'check that the emission line data file naming convention has not changed.'
         )
 
-    flux_ALMA = np.atleast_1d((2.75e-19*u.erg/u.s/np.square(u.cm)).value)
-    uncertainty_ALMA = np.atleast_1d((0.52e-19*u.erg/u.s/np.square(u.cm)).value)
-    wavelengths_ALMA = np.atleast_1d((1.0 + df.iloc[index_phot]['zSpec'])*emlines_wavelength_for_ALMA[line_indices_ALMA[0]])
+    line_names_all = ['O III 88.3323um']
+    line_indices_all = [int(line_indices_ALMA[0])]
+    wavelengths_lines = [(1.0 + df.iloc[index_phot]['zSpec'])*emlines_wavelength_for_ALMA[line_indices_ALMA[0]]]
+    uncertainty_lines = [(0.52e-19*u.erg/u.s/np.square(u.cm)).value]
+    flux_lines = [(2.75e-19*u.erg/u.s/np.square(u.cm)).value]
 
-    observed_data_ALMA = Lines(flux=flux_ALMA, unc=uncertainty_ALMA, wavelength=wavelengths_ALMA, resolution=None,
-        mask=np.ones_like(wavelengths_ALMA, dtype=bool), line_ind=line_indices_ALMA, name='ALMA emission line fluxes')
+    if filename_line is not None:
+
+        # Map display names to FSPS emline name strings (as they appear in emlines_info.dat)
+        # These lines are measured independently from the spectra/catalog, so this lookup always
+        # uses the FSPS emission line list, regardless of use_cue
+
+        line_fsps_names = ['[O II] 3726', '[O II] 3729', '[Ne III] 3869', 'Ba-gamma 4341', '[O III] 4363', 'Ba-beta 4861', '[O III] 5007']
+        line_display_names = ['OII_3726', 'OII_3729', 'NeIII_3869', 'Hgamma', 'OIII_4363', 'Hbeta', 'OIII_5007']
+
+        line_indices_catalog = [int(np.where(fsps_emlines_names == name)[0][0]) for name in line_fsps_names]
+
+        # Auto-detect delimiter; strip whitespace from column names to handle formatting variation
+
+        df_lines = pd.read_csv(f'data/{filename_line}', sep=None, engine='python')
+
+        df_lines.columns = df_lines.columns.str.strip()
+
+        try:
+
+            # CSV format matching catalog_redshiftFrontier.csv: units are 1e-20 erg/s/cm^2
+
+            line_units_conversion = 1.0e-20
+
+            flux_catalog = np.array([
+                df_lines['O2_3727_flux'].iloc[0]*line_units_conversion/2.0,
+                df_lines['O2_3727_flux'].iloc[0]*line_units_conversion/2.0,
+                df_lines['Ne3_3868_flux'].iloc[0]*line_units_conversion,
+                df_lines['HBaG_4340_flux'].iloc[0]*line_units_conversion,
+                df_lines['O3_4363_flux'].iloc[0]*line_units_conversion,
+                df_lines['HBaB_4861_flux'].iloc[0]*line_units_conversion,
+                df_lines['O3_5007_flux'].iloc[0]*line_units_conversion,
+            ])
+
+            uncertainty_catalog = np.array([
+                df_lines['O2_3727_flux_err'].iloc[0]*line_units_conversion/np.sqrt(2.0),
+                df_lines['O2_3727_flux_err'].iloc[0]*line_units_conversion/np.sqrt(2.0),
+                df_lines['Ne3_3868_flux_err'].iloc[0]*line_units_conversion,
+                df_lines['HBaG_4340_flux_err'].iloc[0]*line_units_conversion,
+                df_lines['O3_4363_flux_err'].iloc[0]*line_units_conversion,
+                df_lines['HBaB_4861_flux_err'].iloc[0]*line_units_conversion,
+                df_lines['O3_5007_flux_err'].iloc[0]*line_units_conversion,
+            ])
+
+        except KeyError:
+
+            try:
+
+                # TXT format matching ___poodle_table_emission_line_fluxes_*.txt: units are erg/s/cm^2
+
+                flux_catalog = np.array([
+                    df_lines['Flux_OII'].iloc[0]/2.0,
+                    df_lines['Flux_OII'].iloc[0]/2.0,
+                    df_lines['Flux_NeIII'].iloc[0],
+                    df_lines['Flux_Hg'].iloc[0],
+                    df_lines['Flux_OIII4363'].iloc[0],
+                    df_lines['Flux_Hb'].iloc[0],
+                    df_lines['Flux_OIII'].iloc[0],
+                ])
+
+                uncertainty_catalog = np.array([
+                    df_lines['eFlux_OII'].iloc[0]/np.sqrt(2.0),
+                    df_lines['eFlux_OII'].iloc[0]/np.sqrt(2.0),
+                    df_lines['eFlux_NeIII'].iloc[0],
+                    df_lines['eFlux_Hg'].iloc[0],
+                    df_lines['eFlux_OIII4363'].iloc[0],
+                    df_lines['eFlux_Hb'].iloc[0],
+                    df_lines['eFlux_OIII'].iloc[0],
+                ])
+
+            except KeyError:
+
+                raise KeyError(
+                    f'Unrecognized column format in {filename_line}. '
+                    f'Expected columns matching catalog_redshiftFrontier.csv or '
+                    f'___poodle_table_emission_line_fluxes_*.txt. '
+                    f'Found: {list(df_lines.columns)}'
+                )
+
+        uncertainty_catalog = np.nanmax([uncertainty_catalog, np.abs(flux_catalog)/maximumSNR], axis=0)
+
+        wavelengths_catalog = (1.0 + df.iloc[index_phot]['zSpec'])*fsps_emlines_rest_wavelength_Angstroms[line_indices_catalog]
+
+        line_names_all.extend(line_display_names)
+        line_indices_all.extend(line_indices_catalog)
+        wavelengths_lines.extend(wavelengths_catalog.tolist())
+        uncertainty_lines.extend(uncertainty_catalog.tolist())
+        flux_lines.extend(flux_catalog.tolist())
+
+    line_indices_all = np.array(line_indices_all)
+    wavelengths_lines = np.array(wavelengths_lines)
+    uncertainty_lines = np.array(uncertainty_lines)
+    flux_lines = np.array(flux_lines)
+
+    mask_lines = np.zeros_like(flux_lines, dtype=bool)
+    mask_lines = mask_lines | ~np.isfinite(flux_lines*uncertainty_lines)
+    mask_lines = mask_lines | (uncertainty_lines <= 0.0)
+    mask_lines = ~mask_lines
+
+    observed_data_lines = Lines(
+        line_ind=line_indices_all, line_names=line_names_all,
+        wavelength=wavelengths_lines, flux=flux_lines, uncertainty=uncertainty_lines, mask=mask_lines,
+        name='Emission line fluxes (ALMA)' if filename_line is None else 'Emission line fluxes (ALMA + catalog)',
+    )
 
     # Initializes and defines the observed_data dictionary
 
@@ -1736,11 +1840,11 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
     if observed_data_miri_lrs is not None:
 
-        observations = [*observed_data_nirspec_list, observed_data_miri_lrs, observed_data_ALMA, observed_data_phot]
+        observations = [*observed_data_nirspec_list, observed_data_miri_lrs, observed_data_lines, observed_data_phot]
 
     else:
 
-        observations = [*observed_data_nirspec_list, observed_data_ALMA, observed_data_phot]
+        observations = [*observed_data_nirspec_list, observed_data_lines, observed_data_phot]
 
     for observation in observations: observation.redshift = df.iloc[index_phot]['zSpec']
 
