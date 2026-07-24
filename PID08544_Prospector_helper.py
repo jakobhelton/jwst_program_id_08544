@@ -1730,14 +1730,25 @@ def build_observations(index_phot, filename_phot, filename_spec=None, filename_l
 
     if filename_line is not None:
 
-        # Map display names to FSPS emline name strings (as they appear in emlines_info.dat)
-        # These lines are measured independently from the spectra/catalog, so this lookup always
-        # uses the FSPS emission line list, regardless of use_cue
+        # Map display names to emission line name strings (as they appear in emlines_info.dat).
+        # Uses emlines_names_for_ALMA/emlines_wavelength_for_ALMA (already selected above based on
+        # use_cue), so this lookup is consistent with whichever line list the model itself predicts.
 
-        line_fsps_names = ['[O II] 3726', '[O II] 3729', '[Ne III] 3869', 'Ba-gamma 4341', '[O III] 4363', 'Ba-beta 4861', '[O III] 5007']
+        line_catalog_names = ['[O II] 3726', '[O II] 3729', '[Ne III] 3869', 'Ba-gamma 4341', '[O III] 4363', 'Ba-beta 4861', '[O III] 5007']
         line_display_names = ['OII_3726', 'OII_3729', 'NeIII_3869', 'Hgamma', 'OIII_4363', 'Hbeta', 'OIII_5007']
 
-        line_indices_catalog = [int(np.where(fsps_emlines_names == name)[0][0]) for name in line_fsps_names]
+        line_indices_catalog_search = [np.where(emlines_names_for_ALMA == name)[0] for name in line_catalog_names]
+
+        if any(indices.size == 0 for indices in line_indices_catalog_search):
+
+            missing = [name for name, indices in zip(line_catalog_names, line_indices_catalog_search) if indices.size == 0]
+
+            raise ValueError(
+                f'Could not find {missing} in the emission line list (use_cue={use_cue}); '
+                'check that the emission line data file naming convention has not changed.'
+            )
+
+        line_indices_catalog = [int(indices[0]) for indices in line_indices_catalog_search]
 
         # Auto-detect delimiter; strip whitespace from column names to handle formatting variation
 
@@ -1808,7 +1819,7 @@ def build_observations(index_phot, filename_phot, filename_spec=None, filename_l
 
         uncertainty_catalog = np.nanmax([uncertainty_catalog, np.abs(flux_catalog)/maximumSNR], axis=0)
 
-        wavelengths_catalog = (1.0 + df.iloc[index_phot]['zSpec'])*fsps_emlines_rest_wavelength_Angstroms[line_indices_catalog]
+        wavelengths_catalog = (1.0 + df.iloc[index_phot]['zSpec'])*emlines_wavelength_for_ALMA[line_indices_catalog]
 
         line_names_all.extend(line_display_names)
         line_indices_all.extend(line_indices_catalog)
