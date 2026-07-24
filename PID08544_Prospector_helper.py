@@ -3,7 +3,7 @@
 JADES-GS-z14-0 Prospector Helper Functions
 ==========================================
 
-The following Python script was last updated on 2026/07/23 by Jakob M. Helton.
+The following Python script was last updated on 2026/07/24 by Jakob M. Helton.
 Helper functions for running Prospector v2 spectral energy distribution fitting
 on JADES spectroscopy and photometry. Covers model building (non-parametric and
 parametric star-formation histories, dust attenuation, nebular gas emission, and
@@ -36,9 +36,14 @@ history type, and redshift for your own target.
     # Defines the spectroscopic files and photometry catalog
 
     filename_spec = [
-        'hlsp_jades_jwst_nirspec_goods-s-deepjwst-00183348_clear-prism_v1.0_x1d.fits',
-        'jw08544_obsAll_t001_miri_p750l_x1d.fits',
-    ] # Defines the spectroscopic files
+        ('hlsp_jades_jwst_nirspec_goods-s-deepjwst-00183348_clear-prism_v1.0_x1d.fits', 'prism'),
+        ('hlsp_jades_jwst_nirspec_goods-s-deepjwst-00183348_f070lp-g140m_v1.0_x1d.fits', 'g140m'),
+        ('hlsp_jades_jwst_nirspec_goods-s-deepjwst-00183348_f170lp-g235m_v1.0_x1d.fits', 'g235m'),
+        ('hlsp_jades_jwst_nirspec_goods-s-deepjwst-00183348_f290lp-g395m_v1.0_x1d.fits', 'g395m'),
+        ('jw08544_obsAll_t001_miri_p750l_x1d.fits', 'miri_lrs'),
+    ]
+    # Defines the spectroscopic files: (filename, grating) tuples; grating is one of
+    # nirspec_gratings_all (for JWST/NIRSpec) or 'miri_lrs' (for JWST/MIRI LRS slit spectroscopy)
 
     filename_phot = 'catalogs/catalog_183348.csv' # Defines the photometric catalog
 
@@ -1527,112 +1532,160 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
     if True: flux_phot[flux_phot < 0.0] = 0.0 # Negative values are zeroed out
 
-    # Reads in the file containing the spectroscopic observations
-
-    if type(filename_spec) is not list:
-
-        temp_filename_spec = filename_spec
-
-    else:
-
-        temp_filename_spec = filename_spec[0]
-
-    wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec = _read_nirspec_data_(
-        temp_filename_spec, maximumSNR=maximumSNR)
-
-    resolution_nirspec = _nirspec_resolution_kms_(wavelengths_nirspec, grating='prism')
-
-    # Determines resolution of the spectral library across a small redshift grid around the target's redshift,
-    # then smooths the observations to the library resolution wherever the observed resolution is higher
+    # Reads in the file(s) containing the spectroscopic observations
+    # filename_spec is a (filename, grating) tuple, or a list of such tuples; grating is either
+    # one of nirspec_gratings_all (for JWST/NIRSpec) or 'miri_lrs' (for JWST/MIRI LRS slit spectroscopy)
 
     lambda_pad_Angstroms = 1e+2
 
-    redshift_grid = np.linspace(df.iloc[index_phot]['zSpec']-1e-1, df.iloc[index_phot]['zSpec']+1e-1, int(2e+2)+1)
+    if filename_spec is not None:
 
-    wavelengths_nirspec_extended = np.concatenate([[wavelengths_nirspec[0] - lambda_pad_Angstroms],
-        wavelengths_nirspec, [wavelengths_nirspec[-1] + lambda_pad_Angstroms]])
+        if type(filename_spec) is list and len(filename_spec) > 0 and type(filename_spec[0]) is tuple:
 
-    resolution_library_extended = np.zeros(len(wavelengths_nirspec_extended))
+            spec_entries = filename_spec
 
-    for redshift in redshift_grid:
+        elif type(filename_spec) is tuple and len(filename_spec) > 0:
 
-        resolution_library_extended = np.maximum(resolution_library_extended,
-            _library_resolution_kms_(wavelengths_nirspec_extended, redshift))
+            spec_entries = [filename_spec]
 
-    resolution_library = resolution_library_extended[1:-1].copy()
-    resolution_library[0] = max(resolution_library[0], resolution_library_extended[0])
-    resolution_library[-1] = max(resolution_library[-1], resolution_library_extended[-1])
+        else:
 
-    flux_nirspec, uncertainty_nirspec, resolution_nirspec = _smooth_nirspec_to_library_resolution_(
-        wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec,
-        resolution_nirspec, resolution_library)
+            raise ValueError(f'Invalid data type for filename_spec: {type(filename_spec)} (Must be tuple or list of tuples.)')
 
-    if type(filename_spec) is list and len(filename_spec) > 1:
+        nirspec_entries = [(filename, grating) for filename, grating in spec_entries if grating in nirspec_gratings_all]
 
-        try:
+        miri_lrs_entries = [filename for filename, grating in spec_entries if grating == 'miri_lrs']
 
-            path_sn_ETC = f'{filename_spec[1]}/lineplot/lineplot_sn.fits'
-            path_target_ETC = f'{filename_spec[1]}/lineplot/lineplot_target.fits'
+        observed_data_nirspec_list = []
 
-            sn_ETC, target_ETC = fits.open(path_sn_ETC), fits.open(path_target_ETC)
+        for (filename, grating) in nirspec_entries:
 
-            wave_ETC = np.array(target_ETC['TARGET'].data.tolist())[:, 0]
-            flux_ETC = np.array(target_ETC['TARGET'].data.tolist())[:, 1]
-            error_ETC = np.array(sn_ETC['SN'].data.tolist())[:, 1]
-            error_ETC *= flux_ETC
+            # Reads in the observations
 
-            error_ETC = np.nanmax([error_ETC, flux_ETC/maximumSNR], axis=0)
+            wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec = _read_nirspec_data_(
+                filename, maximumSNR=maximumSNR)
 
-            flux_miri_lrs = (1e-3*(flux_ETC*u.Jy)/maggies_to_Jy).value
-            uncertainty_miri_lrs = (1e-3*(error_ETC*u.Jy)/maggies_to_Jy).value
-            wavelengths_miri_lrs = ((wave_ETC*u.um).to(u.AA)).value
+            # Determines resolution of observations and spectral library
 
-        except Exception:
+            resolution_nirspec = _nirspec_resolution_kms_(wavelengths_nirspec, grating)
 
-            with fits.open(filename_spec[1]) as hdul_x1d:
+            redshift_grid = np.linspace(df.iloc[index_phot]['zSpec']-1e-1, df.iloc[index_phot]['zSpec']+1e-1, int(2e+2)+1)
 
-                try:
+            wavelengths_nirspec_extended = np.concatenate([[wavelengths_nirspec[0] - lambda_pad_Angstroms],
+                wavelengths_nirspec, [wavelengths_nirspec[-1] + lambda_pad_Angstroms]])
 
-                    data_x1d = hdul_x1d['EXTRACT1D'].data
+            resolution_library_extended = np.zeros(len(wavelengths_nirspec_extended))
 
-                except KeyError:
+            for redshift in redshift_grid:
 
-                    data_x1d = hdul_x1d['COMBINE1D'].data
+                resolution_library_extended = np.maximum(resolution_library_extended,
+                    _library_resolution_kms_(wavelengths_nirspec_extended, redshift))
 
-                column_names = data_x1d.columns.names
-                flux_error_data = data_x1d[np.array(column_names)[np.char.find(column_names, 'ERROR') != -1][0]]
-                wavelength_data = data_x1d.field(np.where(np.array(column_names) == 'WAVELENGTH')[0][0])
-                flux_data = data_x1d.field(np.where(np.array(column_names) == 'FLUX')[0][0])
+            resolution_library = resolution_library_extended[1:-1].copy()
+            resolution_library[0] = max(resolution_library[0], resolution_library_extended[0])
+            resolution_library[-1] = max(resolution_library[-1], resolution_library_extended[-1])
 
-                if True:
+            # Smooths observations where observed resolution is higher than spectral library resolution
 
-                    flux_data = np.flip(flux_data)
-                    flux_error_data = np.flip(flux_error_data)
-                    wavelength_data = np.flip(wavelength_data)
+            flux_nirspec, uncertainty_nirspec, resolution_nirspec = _smooth_nirspec_to_library_resolution_(
+                wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec,
+                resolution_nirspec, resolution_library)
 
-                # Empirical wavelength calibration comes from https://www.scixplorer.org/abs/2024ApJ...977L..32X/abstract
+            jitter_nirspec = Uncorrelated(parnames=[f'spec_jitter_nirspec_{grating}'], weight_by='uncertainty')
+            noise_nirspec = NoiseModel1D(kernels=[jitter_nirspec], metric_name='uncertainty',
+                frac_out_name=f'f_outlier_nirspec_{grating}',
+                nsigma_out_name=f'nsigma_outlier_nirspec_{grating}')
 
-                if False: wavelength_data = -0.0864 + 1.0223*np.power(wavelength_data, 1) - 0.0014*np.power(wavelength_data, 2)
+            observed_data_nirspec = PolySpectrum(wavelength=wavelengths_nirspec, resolution=resolution_nirspec,
+                flux=flux_nirspec, uncertainty=uncertainty_nirspec, mask=mask_nirspec, noise=noise_nirspec,
+                polynomial_order=polynomial_order, lambda_pad=lambda_pad_Angstroms,
+                name=f'JWST/NIRSpec slit spectroscopy ({grating.upper()})')
 
-                condition_miri_lrs = np.logical_and(4.875 <= wavelength_data, wavelength_data <= 10.375)
+            observed_data_nirspec_list.append(observed_data_nirspec)
 
-                flux_miri_lrs = ((flux_data[condition_miri_lrs]*u.Jy)/maggies_to_Jy).value
-                uncertainty_miri_lrs = ((flux_error_data[condition_miri_lrs]*u.Jy)/maggies_to_Jy).value
-                wavelengths_miri_lrs = ((wavelength_data[condition_miri_lrs]*u.um).to(u.AA)).value
+        if miri_lrs_entries:
 
-                if False: flux_miri_lrs[flux_miri_lrs < 0.0] = 0.0 # Negative values are zeroed out
+            try:
 
-        mask_miri_lrs = np.zeros_like(wavelengths_miri_lrs, dtype=bool)
-        mask_miri_lrs = mask_miri_lrs | ~np.isfinite(flux_miri_lrs*uncertainty_miri_lrs)
-        mask_miri_lrs = ~mask_miri_lrs
+                path_sn_ETC = f'{miri_lrs_entries[0]}/lineplot/lineplot_sn.fits'
+                path_target_ETC = f'{miri_lrs_entries[0]}/lineplot/lineplot_target.fits'
 
-        resolution_miri_lrs = -73.1 + 20.0*(wavelengths_miri_lrs*u.AA).to(u.um).value
-        # Retrieved resolving power for the MIRI/LRS using the binary BD Gliese 229Bab
-        # Relevant Reference: https://www.scixplorer.org/abs/2024ApJ...977L..32X/abstract
-        # See Figure C1 in Appendix C: Retrieved Resolving Power and Wavelength Correction
+                sn_ETC, target_ETC = fits.open(path_sn_ETC), fits.open(path_target_ETC)
 
-        resolution_miri_lrs = astropy.constants.c.to('km/s').value/np.sqrt(4*np.log(4))/resolution_miri_lrs
-        # Convert to instrumental resolution at each wavelength point in units of km/s
+                wave_ETC = np.array(target_ETC['TARGET'].data.tolist())[:, 0]
+                flux_ETC = np.array(target_ETC['TARGET'].data.tolist())[:, 1]
+                error_ETC = np.array(sn_ETC['SN'].data.tolist())[:, 1]
+                error_ETC *= flux_ETC
+
+                error_ETC = np.nanmax([error_ETC, flux_ETC/maximumSNR], axis=0)
+
+                flux_miri_lrs = (1e-3*(flux_ETC*u.Jy)/maggies_to_Jy).value
+                uncertainty_miri_lrs = (1e-3*(error_ETC*u.Jy)/maggies_to_Jy).value
+                wavelengths_miri_lrs = ((wave_ETC*u.um).to(u.AA)).value
+
+            except Exception:
+
+                with fits.open(miri_lrs_entries[0]) as hdul_x1d:
+
+                    try:
+
+                        data_x1d = hdul_x1d['EXTRACT1D'].data
+
+                    except KeyError:
+
+                        data_x1d = hdul_x1d['COMBINE1D'].data
+
+                    column_names = data_x1d.columns.names
+                    flux_error_data = data_x1d[np.array(column_names)[np.char.find(column_names, 'ERROR') != -1][0]]
+                    wavelength_data = data_x1d.field(np.where(np.array(column_names) == 'WAVELENGTH')[0][0])
+                    flux_data = data_x1d.field(np.where(np.array(column_names) == 'FLUX')[0][0])
+
+                    if True:
+
+                        flux_data = np.flip(flux_data)
+                        flux_error_data = np.flip(flux_error_data)
+                        wavelength_data = np.flip(wavelength_data)
+
+                    # Empirical wavelength calibration comes from https://www.scixplorer.org/abs/2024ApJ...977L..32X/abstract
+
+                    if False: wavelength_data = -0.0864 + 1.0223*np.power(wavelength_data, 1) - 0.0014*np.power(wavelength_data, 2)
+
+                    condition_miri_lrs = np.logical_and(4.875 <= wavelength_data, wavelength_data <= 10.375)
+
+                    flux_miri_lrs = ((flux_data[condition_miri_lrs]*u.Jy)/maggies_to_Jy).value
+                    uncertainty_miri_lrs = ((flux_error_data[condition_miri_lrs]*u.Jy)/maggies_to_Jy).value
+                    wavelengths_miri_lrs = ((wavelength_data[condition_miri_lrs]*u.um).to(u.AA)).value
+
+                    if False: flux_miri_lrs[flux_miri_lrs < 0.0] = 0.0 # Negative values are zeroed out
+
+            mask_miri_lrs = np.zeros_like(wavelengths_miri_lrs, dtype=bool)
+            mask_miri_lrs = mask_miri_lrs | ~np.isfinite(flux_miri_lrs*uncertainty_miri_lrs)
+            mask_miri_lrs = ~mask_miri_lrs
+
+            resolution_miri_lrs = -73.1 + 20.0*(wavelengths_miri_lrs*u.AA).to(u.um).value
+            # Retrieved resolving power for the MIRI/LRS using the binary BD Gliese 229Bab
+            # Relevant Reference: https://www.scixplorer.org/abs/2024ApJ...977L..32X/abstract
+            # See Figure C1 in Appendix C: Retrieved Resolving Power and Wavelength Correction
+
+            resolution_miri_lrs = astropy.constants.c.to('km/s').value/np.sqrt(4*np.log(4))/resolution_miri_lrs
+            # Convert to instrumental resolution at each wavelength point in units of km/s
+
+            jitter_miri_lrs = Uncorrelated(parnames=['spec_jitter_miri_lrs'], weight_by='uncertainty')
+            noise_miri_lrs = NoiseModel1D(kernels=[jitter_miri_lrs], metric_name='uncertainty',
+                frac_out_name='f_outlier_miri_lrs', nsigma_out_name='nsigma_outlier_miri_lrs')
+
+            observed_data_miri_lrs = PolySpectrum(wavelength=wavelengths_miri_lrs, resolution=resolution_miri_lrs,
+                flux=flux_miri_lrs, uncertainty=uncertainty_miri_lrs, mask=mask_miri_lrs, noise=noise_miri_lrs,
+                polynomial_order=polynomial_order, lambda_pad=lambda_pad_Angstroms,
+                name='JWST/MIRI slit spectroscopy (LRS)')
+
+        else:
+
+            observed_data_miri_lrs = None
+
+    else:
+
+        observed_data_nirspec_list, observed_data_miri_lrs = [], None
 
     # Includes the emission line and continuum constraints from ALMA
 
@@ -1652,38 +1705,22 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
     uncertainty_ALMA = np.atleast_1d((0.52e-19*u.erg/u.s/np.square(u.cm)).value)
     wavelengths_ALMA = np.atleast_1d((1.0 + df.iloc[index_phot]['zSpec'])*emlines_wavelength_for_ALMA[line_indices_ALMA[0]])
 
-    observed_data_ALMA = Lines(flux=flux_ALMA, unc=uncertainty_ALMA, wavelength=wavelengths_ALMA, resolution=None, 
+    observed_data_ALMA = Lines(flux=flux_ALMA, unc=uncertainty_ALMA, wavelength=wavelengths_ALMA, resolution=None,
         mask=np.ones_like(wavelengths_ALMA, dtype=bool), line_ind=line_indices_ALMA, name='ALMA emission line fluxes')
 
     # Initializes and defines the observed_data dictionary
 
-    jitter_nirspec = Uncorrelated(parnames=['spec_jitter_nirspec'], weight_by='uncertainty')
-    noise_nirspec = NoiseModel1D(kernels=[jitter_nirspec], metric_name='uncertainty', 
-        frac_out_name='f_outlier_nirspec', nsigma_out_name='nsigma_outlier_nirspec')
-
-    observed_data_phot = Photometry(filters=filters, wavelength=wavelengths_phot, 
-        flux=flux_phot, uncertainty=uncertainty_phot, mask=mask_phot, 
+    observed_data_phot = Photometry(filters=filters, wavelength=wavelengths_phot,
+        flux=flux_phot, uncertainty=uncertainty_phot, mask=mask_phot,
         name='JWST/NIRCam + JWST/MIRI photometry (ForcePho)')
 
-    observed_data_nirspec = PolySpectrum(wavelength=wavelengths_nirspec, resolution=resolution_nirspec, 
-        flux=flux_nirspec, uncertainty=uncertainty_nirspec, mask=mask_nirspec, noise=noise_nirspec, 
-        polynomial_order=polynomial_order, lambda_pad=1e+2, 
-        name='JWST/NIRSpec slit spectroscopy (PRISM)')
+    if observed_data_miri_lrs is not None:
 
-    observations = [observed_data_nirspec, observed_data_ALMA, observed_data_phot]
+        observations = [*observed_data_nirspec_list, observed_data_miri_lrs, observed_data_ALMA, observed_data_phot]
 
-    if type(filename_spec) is list and len(filename_spec) > 1:
+    else:
 
-        jitter_miri_lrs = Uncorrelated(parnames=['spec_jitter_miri_lrs'], weight_by='uncertainty')
-        noise_miri_lrs = NoiseModel1D(kernels=[jitter_miri_lrs], metric_name='uncertainty', 
-            frac_out_name='f_outlier_miri_lrs', nsigma_out_name='nsigma_outlier_miri_lrs')
-
-        observed_data_miri_lrs = PolySpectrum(wavelength=wavelengths_miri_lrs, resolution=resolution_miri_lrs, 
-            flux=flux_miri_lrs, uncertainty=uncertainty_miri_lrs, mask=mask_miri_lrs, noise=noise_miri_lrs, 
-            polynomial_order=polynomial_order, lambda_pad=1e+2, 
-            name='JWST/MIRI slit spectroscopy (LRS)')
-
-        observations = [observed_data_nirspec, observed_data_miri_lrs, observed_data_ALMA, observed_data_phot]
+        observations = [*observed_data_nirspec_list, observed_data_ALMA, observed_data_phot]
 
     for observation in observations: observation.redshift = df.iloc[index_phot]['zSpec']
 
