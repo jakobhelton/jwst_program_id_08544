@@ -204,6 +204,8 @@ import seaborn as sns
 
 import astropy, matplotlib, scipy, sedpy, corner
 
+import specutils, specutils.manipulation
+
 from scipy.special import logsumexp
 
 from astropy.io import fits
@@ -1295,6 +1297,180 @@ def get_stellarPopulationSynthesis_NonParametric_Cue(cue_kwargs={}):
 
 ###
 
+# Defines function for reading in a single NIRSpec spectroscopic file (FITS x1d or plain-text)
+
+def _read_nirspec_data_(filename, maximumSNR=20.0):
+
+    if 'fits' in filename or 'txt' in filename:
+
+        if 'fits' in filename:
+
+            with fits.open(f'data/{filename}') as hdul:
+
+                extract_5pix, extract_3pix = hdul[1], hdul[2]; data = extract_3pix.data
+
+                wavelengths_nirspec, flux_nirspec, uncertainty_nirspec = data['WAVELENGTH'], data['FLUX'], data['FLUX_ERR']
+
+                uncertainty_nirspec = np.nanmax([uncertainty_nirspec, flux_nirspec/maximumSNR], axis=0)
+
+                wavelengths_nirspec *= u.um; wavelengths_nirspec = wavelengths_nirspec.to(u.AA)
+
+                # Fluxes and uncertainties are in units of ergs/s/cm^2/Angstrom
+                # Wavelengths are in units of microns
+                # Establishes noise floor
+
+        elif 'txt' in filename:
+
+            flux_nirspec = np.genfromtxt(f'data/{filename}', usecols=1, dtype=float)
+            uncertainty_nirspec = np.genfromtxt(f'data/{filename}', usecols=2, dtype=float)
+            wavelengths_nirspec = np.genfromtxt(f'data/{filename}', usecols=0, dtype=float)
+
+            uncertainty_nirspec = np.nanmax([uncertainty_nirspec, flux_nirspec/maximumSNR], axis=0)
+
+            wavelengths_nirspec *= u.AA
+
+            # Fluxes and uncertainties are in units of ergs/s/cm^2/Angstrom
+            # Wavelengths are in units of microns
+            # Establishes noise floor
+
+        flux_nirspec *= u.erg/u.s/np.square(u.cm)/u.AA
+        uncertainty_nirspec *= u.erg/u.s/np.square(u.cm)/u.AA
+
+        flux_nirspec *= np.square(wavelengths_nirspec)/astropy.constants.c.to('AA/s')
+        uncertainty_nirspec *= np.square(wavelengths_nirspec)/astropy.constants.c.to('AA/s')
+
+        flux_nirspec = flux_nirspec.to('Jy').value/maggies_to_Jy
+        uncertainty_nirspec = uncertainty_nirspec.to('Jy').value/maggies_to_Jy
+        wavelengths_nirspec = wavelengths_nirspec.value
+
+        mask_nirspec = np.zeros_like(wavelengths_nirspec, dtype=bool)
+        mask_nirspec = mask_nirspec | ~np.isfinite(flux_nirspec*uncertainty_nirspec)
+        mask_nirspec = mask_nirspec | (uncertainty_nirspec <= 0.0)
+        mask_nirspec = ~mask_nirspec
+
+        if False: flux_nirspec[flux_nirspec < 0.0] = 0.0 # Negative values are zeroed out
+
+        return wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec # Angstroms, maggies, maggies, None
+
+    else:
+
+        raise ValueError(f'Invalid filename: {filename} (Must be of fits or txt type.)')
+
+# Defines function for computing the observed NIRSpec instrumental resolution (in km/s) at each observed wavelength
+
+def _nirspec_resolution_kms_(wavelengths_nirspec, grating):
+
+    # Returns the observed resolution in units of km/s
+    # These are provided in observed-frame wavelengths
+
+    table = Table.read(f'data/{dispersion_profile_filenames[grating]}', format='fits')
+    wavelengths_resolution, resolution = table['WAVELENGTH'].value, table['R'].value
+    wavelengths_resolution *= u.um; wavelengths_resolution = wavelengths_resolution.to(u.AA)
+    # Wavelengths are originally in units of microns, so we convert to Angstroms
+
+    # Convert to instrumental resolution at each wavelength point in units of km/s
+
+    sigma_resolution_kms = astropy.constants.c.to('km/s').value/np.sqrt(4*np.log(4))/resolution
+
+    sigma_resolution_kms = scipy.interpolate.interp1d(wavelengths_resolution, sigma_resolution_kms,
+        bounds_error=False, fill_value='extrapolate')
+
+    resolution_nirspec = 1.0*sigma_resolution_kms(wavelengths_nirspec)
+
+    # Please do not ask me about the following conversion factor...
+    # I will need to ask the JWST/NIRSpec people about this
+
+    if grating == 'prism': resolution_nirspec *= 0.7
+
+    return resolution_nirspec
+
+# Defines function for computing the spectral library resolution (in km/s) interpolated to observed-frame wavelengths
+
+def _library_resolution_kms_(wavelengths_observations, redshift, stellarPopulationSynthesis=sps_FastStepBasis):
+
+    # Returns the spectral library resolution in units of km/s
+    # These are interpolated to observed-frame wavelengths
+
+    wavelengths_library = stellarPopulationSynthesis.ssp.wavelengths
+    sigma_resolution_kms_library = stellarPopulationSynthesis.spectral_resolution
+
+    return np.interp(wavelengths_observations, wavelengths_library*(1.0 + redshift), sigma_resolution_kms_library)
+
+# Defines function for smoothing NIRSpec observations to the spectral library resolution, where necessary
+
+def _smooth_nirspec_to_library_resolution_(wavelengths_nirspec, flux_nirspec, uncertainty_nirspec,
+    mask_nirspec, resolution_nirspec, resolution_library):
+
+    # Returns original data if original resolution is smaller than spectral library resolution
+
+    if not np.any(resolution_nirspec < resolution_library):
+
+        return flux_nirspec.copy(), uncertainty_nirspec.copy(), resolution_nirspec.copy()
+
+    # Compute sigma in units of km/s, then convert to pixels
+
+    delta_wavelengths_nirspec = np.gradient(wavelengths_nirspec)
+    resolution_per_pixel = wavelengths_nirspec/delta_wavelengths_nirspec
+    velocity_per_pixel = astropy.constants.c.to('km/s').value/resolution_per_pixel
+
+    sigma_smooth = np.where(resolution_nirspec < resolution_library,
+        np.sqrt(np.maximum(np.square(resolution_library) -
+        np.square(resolution_nirspec), 0.0)), 0.0)
+
+    sigma_smooth_pixel = sigma_smooth/velocity_per_pixel
+
+    # Fill masked pixels with linear interpolation prior to smoothing
+    # This prevents NaN values from contaminating adjacent valid pixels
+    # The mask is restored in the returned arrays, so the filling does not affect the fit
+
+    flux_filled_nirspec, uncertainty_filled_nirspec = flux_nirspec.copy(), uncertainty_nirspec.copy()
+
+    if np.any(~mask_nirspec):
+
+        flux_filled_nirspec[~mask_nirspec] = np.interp(
+            wavelengths_nirspec[~mask_nirspec], wavelengths_nirspec[mask_nirspec], flux_filled_nirspec[mask_nirspec])
+        uncertainty_filled_nirspec[~mask_nirspec] = np.interp(
+            wavelengths_nirspec[~mask_nirspec], wavelengths_nirspec[mask_nirspec], uncertainty_filled_nirspec[mask_nirspec])
+
+    # Create a Spectrum1D object from specutils for per-pixel wavelength-dependent Gaussian smoothing
+    # Iterates through each wavelength pixel to perform Gaussian smoothing on fluxes and uncertainties
+
+    data_nirspec = specutils.Spectrum1D(
+        spectral_axis=wavelengths_nirspec*u.AA, flux=flux_nirspec*u.Jy,
+        uncertainty=astropy.nddata.StdDevUncertainty(uncertainty_nirspec*u.Jy))
+
+    flux_smoothed_nirspec, uncertainty_smoothed_nirspec = np.zeros_like(flux_nirspec), np.zeros_like(uncertainty_nirspec)
+
+    zipped = zip(wavelengths_nirspec, flux_filled_nirspec, uncertainty_filled_nirspec, sigma_smooth_pixel)
+
+    for index, (temp_wavelengths, temp_flux, temp_uncertainty, temp_sigma_smooth) in enumerate(zipped):
+
+        if temp_sigma_smooth <= 0.0:
+
+            flux_smoothed_nirspec[index] = temp_flux
+            uncertainty_smoothed_nirspec[index] = temp_uncertainty
+
+            continue
+
+        # Smooths the full spectrum using this pixel's effective resolution
+
+        temp_data_smoothed_nirspec = specutils.manipulation.gaussian_smooth(
+            data_nirspec, stddev=np.amax([1e-3, temp_sigma_smooth]))
+
+        flux_smoothed_nirspec[index] = temp_data_smoothed_nirspec.flux.value[index]
+        uncertainty_smoothed_nirspec[index] = temp_data_smoothed_nirspec.uncertainty.quantity.value[index]
+
+    # Returns smoothed fluxes and uncertainties, along with effective resolution
+
+    resolution_nirspec_effective = np.maximum(resolution_nirspec, resolution_library)
+
+    resolution_nirspec_effective = np.sqrt(np.square(resolution_nirspec_effective) + np.square(1.0))
+    # Creates an effective floor for the spectral resolution of 1 km/s to prevent values of zero
+
+    return flux_smoothed_nirspec, uncertainty_smoothed_nirspec, resolution_nirspec_effective
+
+###
+
 # Defines function for reading in the observations
 
 def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0, polynomial_order=2, use_cue=False):
@@ -1361,48 +1537,35 @@ def build_observations(filename_spec, filename_phot, index_phot, maximumSNR=20.0
 
         temp_filename_spec = filename_spec[0]
 
-    with fits.open(f'data/{temp_filename_spec}') as hdul:
+    wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec = _read_nirspec_data_(
+        temp_filename_spec, maximumSNR=maximumSNR)
 
-        extract_5pix, extract_3pix = hdul[1], hdul[2]
+    resolution_nirspec = _nirspec_resolution_kms_(wavelengths_nirspec, grating='prism')
 
-        data = extract_3pix.data
+    # Determines resolution of the spectral library across a small redshift grid around the target's redshift,
+    # then smooths the observations to the library resolution wherever the observed resolution is higher
 
-        wavelengths_nirspec, flux_nirspec, uncertainty_nirspec = data['WAVELENGTH'], data['FLUX'], data['FLUX_ERR']
-        uncertainty_nirspec = np.nanmax([uncertainty_nirspec, flux_nirspec/maximumSNR], axis=0)
-        # Fluxes and uncertainties are in units of ergs/s/cm^2/Angstrom
-        # Wavelengths are in units of microns
-        # Establishes noise floor
+    lambda_pad_Angstroms = 1e+2
 
-        flux_nirspec *= u.erg/u.s/np.square(u.cm)/u.AA
-        uncertainty_nirspec *= u.erg/u.s/np.square(u.cm)/u.AA
-        wavelengths_nirspec *= u.um; wavelengths_nirspec = wavelengths_nirspec.to(u.AA)
+    redshift_grid = np.linspace(df.iloc[index_phot]['zSpec']-1e-1, df.iloc[index_phot]['zSpec']+1e-1, int(2e+2)+1)
 
-        flux_nirspec *= np.square(wavelengths_nirspec)/astropy.constants.c.to('AA/s')
-        uncertainty_nirspec *= np.square(wavelengths_nirspec)/astropy.constants.c.to('AA/s')
+    wavelengths_nirspec_extended = np.concatenate([[wavelengths_nirspec[0] - lambda_pad_Angstroms],
+        wavelengths_nirspec, [wavelengths_nirspec[-1] + lambda_pad_Angstroms]])
 
-        flux_nirspec = flux_nirspec.to('Jy').value/maggies_to_Jy
-        uncertainty_nirspec = uncertainty_nirspec.to('Jy').value/maggies_to_Jy
-        wavelengths_nirspec = wavelengths_nirspec.value
+    resolution_library_extended = np.zeros(len(wavelengths_nirspec_extended))
 
-        mask_nirspec = np.zeros_like(wavelengths_nirspec, dtype=bool)
-        mask_nirspec = mask_nirspec | ~np.isfinite(flux_nirspec*uncertainty_nirspec)
-        mask_nirspec = ~mask_nirspec
+    for redshift in redshift_grid:
 
-        if False: flux_nirspec[flux_nirspec < 0.0] = 0.0 # Negative values are zeroed out
+        resolution_library_extended = np.maximum(resolution_library_extended,
+            _library_resolution_kms_(wavelengths_nirspec_extended, redshift))
 
-    table = Table.read(f'data/{dispersion_profile_filename}', format='fits')
-    wavelengths_resolution, resolution = table['WAVELENGTH'].value, table['R'].value
-    wavelengths_resolution *= u.um; wavelengths_resolution = wavelengths_resolution.to(u.AA)
-    # Wavelengths are in units of microns, but need to convert to Angstroms
+    resolution_library = resolution_library_extended[1:-1].copy()
+    resolution_library[0] = max(resolution_library[0], resolution_library_extended[0])
+    resolution_library[-1] = max(resolution_library[-1], resolution_library_extended[-1])
 
-    sigma_resolution_kms = astropy.constants.c.to('km/s').value/np.sqrt(4*np.log(4))/resolution
-    # Convert to instrumental resolution at each wavelength point in units of km/s
-
-    sigma_resolution_kms = scipy.interpolate.interp1d(wavelengths_resolution, sigma_resolution_kms, 
-        bounds_error=False, fill_value='extrapolate')
-
-    resolution_nirspec = 0.7*sigma_resolution_kms(wavelengths_nirspec)
-    # Please do not ask me about this conversion factor... I need to ask the JWST/NIRSpec people about this
+    flux_nirspec, uncertainty_nirspec, resolution_nirspec = _smooth_nirspec_to_library_resolution_(
+        wavelengths_nirspec, flux_nirspec, uncertainty_nirspec, mask_nirspec,
+        resolution_nirspec, resolution_library)
 
     if type(filename_spec) is list and len(filename_spec) > 1:
 
